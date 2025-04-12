@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Global list to store papers
 papers = []
 
-# Define our desired topics (used for filtering and tagging)
+# Define desired topics (used for filtering and tagging)
 DESIRED_TOPICS = [
     "reinforcement learning",
     "digital twin",
@@ -26,10 +26,10 @@ DESIRED_TOPICS = [
     "federated learning"
 ]
 
-# Define the summarizer model we're using
+# Default summarization model
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
 
-# Initialize the summarization pipeline
+# Initialize the summarization pipeline (default model)
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
@@ -53,15 +53,12 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
     feed = feedparser.parse(query_url)
     new_papers = []
     for idx, entry in enumerate(feed.entries):
-        # Locate PDF link if available.
         pdf_link = None
         for link in entry.get("links", []):
             if link.get("type") == "application/pdf":
                 pdf_link = link.get("href")
                 break
         pdf_link = pdf_link or entry.link
-
-        # Convert published date from UTC to PST.
         published = entry.get("published", "No date available")
         try:
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
@@ -70,15 +67,13 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             published_str = dt_pst.strftime("%b %d, %Y %I:%M %p PST")
         except Exception:
             published_str = published
-
         combined_text = (entry.title + " " + entry.summary).lower()
         tags = [topic for topic in DESIRED_TOPICS if topic in combined_text]
-
         new_papers.append({
-            'id': idx,  # Unique ID for this batch.
+            'id': idx,
             'title': entry.title,
-            'link': entry.link,       # Abstract page URL.
-            'pdf_link': pdf_link,     # Direct PDF link if available.
+            'link': entry.link,
+            'pdf_link': pdf_link,
             'summary': entry.summary,
             'tags': tags,
             'published': published_str
@@ -103,18 +98,28 @@ def extract_pdf_text(pdf_url):
         print("Error extracting PDF text:", e)
         return None
 
-def generate_summary(text):
+def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL):
     improved_prompt = (
-        "Provide a concise 2-3 sentence summary of the following research paper content, "
-        "highlighting its key contributions, novelty, and potential impact:\n\n" + text
+        "Provide a concise 2-3 sentence summary for social media audiences. "
+        "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
     )
-    summary_output = summarizer(
-        improved_prompt,
-        max_length=300,
-        min_length=80,
-        do_sample=False,
-        truncation=True
-    )
+    if model_name != SUMMARIZER_MODEL:
+        temp_summarizer = pipeline("summarization", model=model_name)
+        summary_output = temp_summarizer(
+            improved_prompt,
+            max_length=max_length,
+            min_length=min_length,
+            do_sample=False,
+            truncation=True
+        )
+    else:
+        summary_output = summarizer(
+            improved_prompt,
+            max_length=max_length,
+            min_length=min_length,
+            do_sample=False,
+            truncation=True
+        )
     return summary_output[0]['summary_text'].strip()
 
 @app.route('/')
@@ -124,7 +129,7 @@ def index():
         page = int(request.args.get("page", "1"))
     except ValueError:
         page = 1
-    max_results = 100  # Load 100 papers per page.
+    max_results = 100
     start = (page - 1) * max_results
     fetch_papers(selected_tag, max_results, start)
     
@@ -133,8 +138,8 @@ def index():
         pub = paper.get("published", "No date available")
         try:
             dt = datetime.strptime(pub, "%b %d, %Y %I:%M %p PST")
-            day_key = dt.strftime("%b %d, %Y")   # e.g., "Apr 10, 2025"
-            time_str = dt.strftime("%I:%M %p PST")  # e.g., "11:42 PM PST"
+            day_key = dt.strftime("%b %d, %Y")
+            time_str = dt.strftime("%I:%M %p PST")
         except Exception:
             day_key = pub
             time_str = ""
@@ -157,8 +162,17 @@ def summarize_paper(paper_id):
     if not pdf_text:
         return jsonify({'error': 'Could not download or extract text from PDF.'}), 404
     truncated_text = pdf_text[:5000]
-    prompt = f"{truncated_text}"
-    ai_summary = generate_summary(prompt)
+    
+    # Read additional parameters from request
+    try:
+        min_length = int(request.args.get("min_length", 80))
+        max_length = int(request.args.get("max_length", 300))
+    except ValueError:
+        min_length = 80
+        max_length = 300
+    model_name = request.args.get("model", SUMMARIZER_MODEL)
+    
+    ai_summary = generate_summary(truncated_text, min_length, max_length, model_name)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})

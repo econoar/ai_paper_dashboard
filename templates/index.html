@@ -64,6 +64,7 @@
                 <a href="{{ url_for('open_pdf', paper_id=paper.id) }}" class="btn btn-primary btn-sm mb-2">
                   <i class="fas fa-file-pdf"></i> Open PDF
                 </a>
+                <!-- Summarize button now triggers a modal -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
@@ -128,8 +129,105 @@
     });
   </script>
   
-  <!-- More Info Modal Trigger -->
+  <!-- Summarize Modal with Options -->
+  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+             <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Customization options -->
+          <div class="form-group">
+            <label for="minLength">Minimum Length (tokens):</label>
+            <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
+          </div>
+          <div class="form-group">
+            <label for="maxLength">Maximum Length (tokens):</label>
+            <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
+          </div>
+          <div class="form-group">
+            <label for="modelSelect">Model:</label>
+            <select id="modelSelect" class="form-control">
+              <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
+              <option value="facebook/bart-large-cnn">BART-Large</option>
+            </select>
+          </div>
+          <hr>
+          <div id="summaryLoading" class="text-center" style="display:none;">
+            <span class="spinner-border"></span>
+            <p>Generating summary...</p>
+          </div>
+          <div id="summaryContent" style="display:none;">
+            <p id="summaryText"></p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="generateSummaryBtn" class="btn btn-success">Generate Summary</button>
+          <button id="copySummaryBtn" class="btn btn-primary">Copy Summary</button>
+          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Summarize Button AJAX Handler and Modal Trigger -->
   <script>
+    var currentPaperId = null;
+    
+    $(document).on("click", ".summarize-btn", function() {
+      currentPaperId = $(this).data("paper-id");
+      // Reset modal fields if desired (defaults are already set in modal inputs)
+      $("#summaryLoading").show();
+      $("#summaryContent").hide();
+      $("#summaryModal").modal("show");
+    });
+    
+    $("#generateSummaryBtn").on("click", function() {
+      var minLength = $("#minLength").val();
+      var maxLength = $("#maxLength").val();
+      var model = $("#modelSelect").val();
+      $.ajax({
+        url: "/summarize/" + currentPaperId,
+        type: "GET",
+        data: {
+          min_length: minLength,
+          max_length: maxLength,
+          model: model
+        },
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        success: function(data) {
+          if(data.summary) {
+            $("#summaryText").text(data.summary);
+            $("#summaryLoading").hide();
+            $("#summaryContent").show();
+          } else if(data.error) {
+            $("#summaryText").text("Error: " + data.error);
+            $("#summaryLoading").hide();
+            $("#summaryContent").show();
+          }
+        },
+        error: function() {
+          $("#summaryText").text("Error generating summary.");
+          $("#summaryLoading").hide();
+          $("#summaryContent").show();
+        }
+      });
+    });
+    
+    $("#copySummaryBtn").on("click", function() {
+      var summaryText = $("#summaryText").text();
+      navigator.clipboard.writeText(summaryText).then(function() {
+          alert("Summary copied to clipboard!");
+      }, function(err) {
+          alert("Error copying summary: " + err);
+      });
+    });
+    
+    // More Info Modal Trigger remains unchanged.
     $(document).on("click", ".more-info-btn", function() {
       var title = $(this).data("title");
       var tags = $(this).data("tags");
@@ -149,10 +247,8 @@
       
       $("#detailsModal").modal("show");
     });
-  </script>
   
-  <!-- Bookmark Functionality -->
-  <script>
+    // Bookmark functionality remains unchanged.
     $(document).ready(function(){
       function updateBookmarks() {
         var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
@@ -183,79 +279,7 @@
     });
   </script>
   
-  <!-- Summarize AJAX Handler and Modal -->
-  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="summaryModalLabel">Paper Summary</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div id="summaryLoading" class="text-center">
-            <span class="spinner-border"></span>
-            <p>Generating summary...</p>
-          </div>
-          <div id="summaryContent" style="display:none;">
-            <p id="summaryText"></p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="copySummaryBtn" class="btn btn-primary">Copy Summary</button>
-          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
-          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <script>
-    $(document).on("click", ".summarize-btn", function() {
-      var paperId = $(this).data("paper-id");
-      $("#summaryModal").modal("show");
-      $("#summaryLoading").show();
-      $("#summaryContent").hide();
-      
-      $.ajax({
-        url: "/summarize/" + paperId,
-        type: "GET",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        success: function(data) {
-          if(data.summary) {
-            $("#summaryText").text(data.summary);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
-          } else if(data.error) {
-            $("#summaryText").text("Error: " + data.error);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
-          }
-        },
-        error: function() {
-          $("#summaryText").text("Error generating summary.");
-          $("#summaryLoading").hide();
-          $("#summaryContent").show();
-        }
-      });
-    });
-    
-    $("#copySummaryBtn").on("click", function() {
-      var summaryText = $("#summaryText").text();
-      navigator.clipboard.writeText(summaryText).then(function() {
-          alert("Summary copied to clipboard!");
-      }, function(err) {
-          alert("Error copying summary: " + err);
-      });
-    });
-    
-    $("#resummarizeBtn").on("click", function() {
-      $(".summarize-btn:visible").first().click();
-    });
-  </script>
-  
-  <!-- Modal for More Info -->
+  <!-- Modal for More Info (unchanged) -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -282,4 +306,5 @@
       </div>
     </div>
   </div>
+  
 {% endblock %}
