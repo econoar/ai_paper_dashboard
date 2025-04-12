@@ -29,16 +29,10 @@ DESIRED_TOPICS = [
 # Define the summarizer model we're using
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
 
-# Initialize the Hugging Face summarization pipeline
+# Initialize the summarization pipeline
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
-    """
-    Constructs an arXiv API query:
-      - Base categories: cs.AI, cs.LG, and stat.ML.
-      - For tag "all", combines all DESIRED_TOPICS; otherwise, filters by the specified tag.
-      - Returns a URL-encoded query URL.
-    """
     base_categories = "(cat:cs.AI+OR+cat:cs.LG+OR+cat:stat.ML)"
     if selected_tag.lower() == "all":
         topics_query = "+OR+".join([f'all:"{topic}"' for topic in DESIRED_TOPICS])
@@ -54,10 +48,6 @@ def build_query(selected_tag="all", max_results=100, start=0):
     return query_url
 
 def fetch_papers(selected_tag="all", max_results=100, start=0):
-    """
-    Retrieves paper metadata from arXiv, assigns a unique ID to each paper,
-    and converts the published date to PST.
-    """
     global papers
     query_url = build_query(selected_tag, max_results, start)
     feed = feedparser.parse(query_url)
@@ -96,10 +86,6 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
     papers = new_papers
 
 def extract_pdf_text(pdf_url):
-    """
-    Downloads the PDF from pdf_url and extracts text using PyPDF2.
-    Returns the extracted text or None on error.
-    """
     try:
         response = requests.get(pdf_url, timeout=30)
         if response.status_code == 200:
@@ -118,11 +104,6 @@ def extract_pdf_text(pdf_url):
         return None
 
 def generate_summary(text):
-    """
-    Uses the summarization pipeline to produce a concise summary.
-    The prompt instructs the model to generate a 2-3 sentence summary
-    emphasizing key contributions, novelty, and potential impact.
-    """
     improved_prompt = (
         "Provide a concise 2-3 sentence summary of the following research paper content, "
         "highlighting its key contributions, novelty, and potential impact:\n\n" + text
@@ -147,7 +128,6 @@ def index():
     start = (page - 1) * max_results
     fetch_papers(selected_tag, max_results, start)
     
-    # Group papers by day (based on published date in PST) and record a separate time field.
     grouped_papers = defaultdict(list)
     for paper in papers:
         pub = paper.get("published", "No date available")
@@ -161,7 +141,6 @@ def index():
         paper['time'] = time_str
         grouped_papers[day_key].append(paper)
     
-    # Pass the full papers list to the template for JS-based bookmark lookup.
     return render_template('index.html', grouped_papers=grouped_papers,
                            selected_tag=selected_tag, page=page, papers=papers)
 
@@ -181,7 +160,6 @@ def summarize_paper(paper_id):
     prompt = f"{truncated_text}"
     ai_summary = generate_summary(prompt)
     
-    # If AJAX, return JSON; otherwise, render the summary page.
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})
     else:
@@ -200,10 +178,7 @@ def open_pdf(paper_id):
 
 @app.route('/bookmarks')
 def bookmarks():
-    # Render the bookmarks page; client-side JS will load bookmark data.
     return render_template('bookmarks.html', papers=papers)
-
-# NOTE: The "/insights" route has been removed as requested.
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
