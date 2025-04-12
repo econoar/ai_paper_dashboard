@@ -1,294 +1,35 @@
-{% extends "base.html" %}
-
-{% block content %}
-  <h1>Highly Relevant AI Research Papers</h1>
-
-  <!-- Search Bar with Autocomplete -->
-  <div class="mb-3">
-    <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title...">
-  </div>
-  
-  <!-- Filter Form -->
-  <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
-    <label for="tag" class="mr-2">Filter by Tag:</label>
-    <select name="tag" id="tag" class="form-control mr-4">
-      <option value="all" {% if selected_tag == "all" %} selected {% endif %}>All</option>
-      <option value="reinforcement learning" {% if selected_tag == "reinforcement learning" %} selected {% endif %}>Reinforcement Learning</option>
-      <option value="digital twin" {% if selected_tag == "digital twin" %} selected {% endif %}>Digital Twin</option>
-      <option value="agent coordination" {% if selected_tag == "agent coordination" %} selected {% endif %}>Agent Coordination</option>
-      <option value="multi-agent systems" {% if selected_tag == "multi-agent systems" %} selected {% endif %}>Multi-agent Systems</option>
-      <option value="transformers" {% if selected_tag == "transformers" %} selected {% endif %}>Transformers</option>
-      <option value="explainable ai" {% if selected_tag == "explainable ai" %} selected {% endif %}>Explainable AI</option>
-      <option value="self-supervised learning" {% if selected_tag == "self-supervised learning" %} selected {% endif %}>Self-supervised Learning</option>
-      <option value="federated learning" {% if selected_tag == "federated learning" %} selected {% endif %}>Federated Learning</option>
-    </select>
-    <button type="submit" class="btn btn-primary">Apply Filter</button>
-  </form>
-  
-  {% for day, day_papers in grouped_papers.items() %}
-    <h3>{{ day }}</h3>
-    <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>Time (PST)</th>
-          <th>Tags</th>
-          <th>Title</th>
-          <th>Abstract Excerpt</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for paper in day_papers %}
-          <tr class="paper-row">
-            <td>{{ paper.time }}</td>
-            <td>
-              {% if paper.tags %}
-                {{ paper.tags | join(', ') }}
-              {% else %}
-                N/A
-              {% endif %}
-            </td>
-            <td class="paper-title">{{ paper.title }}</td>
-            <td>
-              {% if paper.summary %}
-                {{ paper.summary[:200] }}{% if paper.summary|length > 200 %}...{% endif %}
-              {% else %}
-                No abstract available.
-              {% endif %}
-            </td>
-            <td>
-              <div class="d-flex flex-column">
-                <a href="{{ paper.link }}" target="_blank" class="btn btn-info btn-sm mb-2">
-                  <i class="fas fa-external-link-alt"></i> arXiv
-                </a>
-                <a href="{{ url_for('open_pdf', paper_id=paper.id) }}" class="btn btn-primary btn-sm mb-2">
-                  <i class="fas fa-file-pdf"></i> Open PDF
-                </a>
-                <!-- Replace the old summarize link with an asynchronous button -->
-                <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
-                  <i class="fas fa-lightbulb"></i> Summarize
-                </button>
-                <a href="{{ url_for('insights', paper_id=paper.id) }}" class="btn btn-dark btn-sm mb-2">
-                  <i class="fas fa-comment-dots"></i> Generate Insight
-                </a>
-                <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
-                        data-id="{{ paper.id }}"
-                        data-title="{{ paper.title }}"
-                        data-tags="{{ paper.tags | join(', ') }}"
-                        data-published="{{ paper.published }}"
-                        data-time="{{ paper.time }}"
-                        data-link="{{ paper.link }}"
-                        data-pdf="{{ paper.pdf_link }}"
-                        data-summary="{{ paper.summary | replace('\n', ' ') }}">
-                  <i class="fas fa-info-circle"></i> More Info
-                </button>
-                <button class="btn btn-warning btn-sm bookmark-btn mb-2" data-paper-id="{{ paper.id }}">
-                  <i class="far fa-star"></i> Bookmark
-                </button>
-              </div>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  {% endfor %}
-  
-  <!-- Pagination Controls -->
-  <nav aria-label="Page navigation">
-    <ul class="pagination justify-content-center">
-      {% if page > 1 %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page-1) }}">Previous</a>
-        </li>
-      {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#">Previous</a>
-        </li>
-      {% endif %}
-      <li class="page-item active">
-        <a class="page-link" href="#">{{ page }}</a>
-      </li>
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page+1) }}">Next</a>
-      </li>
-    </ul>
-  </nav>
-  
-  <!-- Summarization Modal -->
-  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="summaryModalLabel">Paper Summary</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <div id="summaryLoading" class="text-center">
-            <span class="spinner-border"></span>
-            <p>Generating summary...</p>
-          </div>
-          <div id="summaryContent" style="display:none;">
-            <p id="summaryText"></p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="copySummaryBtn" class="btn btn-primary">Copy Summary</button>
-          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
-          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
-        </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>AI Papers Dashboard</title>
+    <!-- Use a modern Bootswatch theme -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cosmo/bootstrap.min.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" 
+          integrity="sha512-Fo3rlrZj/k7ujTnH/PRd1aPfX6Fq38Ll7tN+61HhNOc2+HfYvDmI1r/X9TT3bN7Ol6+okxj8l6MwyHA3zeG8w==" 
+          crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- jQuery UI for Autocomplete -->
+    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" crossorigin="anonymous"></script>
+    <!-- Bootstrap's JS bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
+      <div class="navbar-nav">
+        <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+        <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
       </div>
+    </nav>
+    <div class="container mt-4">
+      {% block content %}{% endblock %}
     </div>
-  </div>
-  
-  <!-- Autocomplete for Search -->
-  <script>
-    $(function() {
-      var titles = [];
-      $(".paper-title").each(function() {
-          titles.push($(this).text().trim());
-      });
-      $("#searchInput").autocomplete({
-          source: titles,
-          select: function(event, ui) {
-              $(".paper-row").each(function() {
-                  $(this).toggle($(this).text().toLowerCase().indexOf(ui.item.value.toLowerCase()) > -1);
-              });
-          }
-      });
-    });
-  </script>
-  
-  <!-- More Info Modal Trigger -->
-  <script>
-    $(document).on("click", ".more-info-btn", function() {
-      var title = $(this).data("title");
-      var tags = $(this).data("tags");
-      var published = $(this).data("published");
-      var time = $(this).data("time");
-      var link = $(this).data("link");
-      var pdf = $(this).data("pdf");
-      var summary = $(this).data("summary");
-      
-      $("#modalTitle").text(title);
-      $("#modalTags").text(tags || "N/A");
-      $("#modalPublished").text(published);
-      $("#modalTime").text(time);
-      $("#modalLink").attr("href", link).text(link);
-      $("#modalPdf").attr("href", pdf).text(pdf);
-      $("#modalSummary").text(summary);
-      
-      $("#detailsModal").modal("show");
-    });
-  </script>
-  
-  <!-- Bookmark Functionality -->
-  <script>
-    $(document).ready(function(){
-      function updateBookmarks() {
-        var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
-        $(".bookmark-btn").each(function() {
-          var paperId = $(this).data("paper-id").toString();
-          if (bookmarks.find(p => p.id.toString() === paperId)) {
-            $(this).html('<i class="fas fa-star"></i> Bookmarked');
-          } else {
-            $(this).html('<i class="far fa-star"></i> Bookmark');
-          }
-        });
-      }
-      
-      updateBookmarks();
-      
-      $(document).on("click", ".bookmark-btn", function(){
-          var paperId = $(this).data("paper-id").toString();
-          var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
-          var paper = allPapers.find(p => p.id.toString() === paperId);
-          if (bookmarks.find(p => p.id.toString() === paperId)) {
-              bookmarks = bookmarks.filter(p => p.id.toString() !== paperId);
-          } else {
-              bookmarks.push(paper);
-          }
-          localStorage.setItem('bookmarksData', JSON.stringify(bookmarks));
-          updateBookmarks();
-      });
-    });
-  </script>
-  
-  <!-- Summarize Button AJAX Handler -->
-  <script>
-    $(document).on("click", ".summarize-btn", function() {
-      var paperId = $(this).data("paper-id");
-      // Show the summary modal and display the loading spinner.
-      $("#summaryModal").modal("show");
-      $("#summaryLoading").show();
-      $("#summaryContent").hide();
-      
-      // Send AJAX request to the /summarize/<paper_id> endpoint.
-      $.ajax({
-        url: "/summarize/" + paperId,
-        type: "GET",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        success: function(data) {
-          if(data.summary) {
-              $("#summaryText").text(data.summary);
-              $("#summaryLoading").hide();
-              $("#summaryContent").show();
-          } else if(data.error) {
-              $("#summaryText").text("Error: " + data.error);
-              $("#summaryLoading").hide();
-              $("#summaryContent").show();
-          }
-        },
-        error: function() {
-          $("#summaryText").text("Error generating summary.");
-          $("#summaryLoading").hide();
-          $("#summaryContent").show();
-        }
-      });
-    });
-    
-    // Copy Summary button functionality.
-    $("#copySummaryBtn").on("click", function() {
-      var summaryText = $("#summaryText").text();
-      navigator.clipboard.writeText(summaryText).then(function() {
-          alert("Summary copied to clipboard!");
-      }, function(err) {
-          alert("Error copying summary: " + err);
-      });
-    });
-    
-    // Re-summarize button functionality: re-trigger the AJAX request.
-    $("#resummarizeBtn").on("click", function() {
-      $(".summarize-btn:visible").first().click();
-    });
-  </script>
-  
-  <!-- (Optional) Modal for More Info -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="detailsModalLabel">Paper Details</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <p><strong>Title:</strong> <span id="modalTitle"></span></p>
-          <p><strong>Published:</strong> <span id="modalPublished"></span></p>
-          <p><strong>Time:</strong> <span id="modalTime"></span></p>
-          <p><strong>Tags:</strong> <span id="modalTags"></span></p>
-          <p><strong>arXiv Link:</strong> <a href="#" target="_blank" id="modalLink"></a></p>
-          <p><strong>PDF Link:</strong> <a href="#" target="_blank" id="modalPdf"></a></p>
-          <hr>
-          <p><strong>Abstract:</strong></p>
-          <p id="modalSummary"></p>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-{% endblock %}
+    <!-- Provide full list of papers as a JS variable; default to empty if not provided -->
+    <script>
+      var allPapers = {{ papers|default([])|tojson }};
+    </script>
+</body>
+</html>

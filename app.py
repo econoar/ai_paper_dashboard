@@ -29,10 +29,16 @@ DESIRED_TOPICS = [
 # Define the summarizer model we're using
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
 
-# Initialize the summarization pipeline
+# Initialize the Hugging Face summarization pipeline
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
+    """
+    Constructs an arXiv API query:
+      - Base categories: cs.AI, cs.LG, and stat.ML.
+      - For tag "all", combines all DESIRED_TOPICS; otherwise, filters by the specified tag.
+      - Returns a URL-encoded query URL.
+    """
     base_categories = "(cat:cs.AI+OR+cat:cs.LG+OR+cat:stat.ML)"
     if selected_tag.lower() == "all":
         topics_query = "+OR+".join([f'all:"{topic}"' for topic in DESIRED_TOPICS])
@@ -48,11 +54,16 @@ def build_query(selected_tag="all", max_results=100, start=0):
     return query_url
 
 def fetch_papers(selected_tag="all", max_results=100, start=0):
+    """
+    Retrieves paper metadata from arXiv, assigns a unique ID to each paper,
+    and converts the published date to PST.
+    """
     global papers
     query_url = build_query(selected_tag, max_results, start)
     feed = feedparser.parse(query_url)
     new_papers = []
     for idx, entry in enumerate(feed.entries):
+        # Locate PDF link if available.
         pdf_link = None
         for link in entry.get("links", []):
             if link.get("type") == "application/pdf":
@@ -60,6 +71,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
                 break
         pdf_link = pdf_link or entry.link
 
+        # Convert published date from UTC to PST.
         published = entry.get("published", "No date available")
         try:
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
@@ -75,8 +87,8 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
         new_papers.append({
             'id': idx,  # Unique ID for this batch.
             'title': entry.title,
-            'link': entry.link,
-            'pdf_link': pdf_link,
+            'link': entry.link,       # Abstract page URL.
+            'pdf_link': pdf_link,     # Direct PDF link if available.
             'summary': entry.summary,
             'tags': tags,
             'published': published_str
@@ -84,6 +96,10 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
     papers = new_papers
 
 def extract_pdf_text(pdf_url):
+    """
+    Downloads the PDF from pdf_url and extracts text using PyPDF2.
+    Returns the extracted text or None on error.
+    """
     try:
         response = requests.get(pdf_url, timeout=30)
         if response.status_code == 200:
@@ -104,11 +120,12 @@ def extract_pdf_text(pdf_url):
 def generate_summary(text):
     """
     Uses the summarization pipeline to produce a concise summary.
-    The prompt now instructs the model to generate 2-3 sentences focusing on key contributions.
+    The prompt instructs the model to generate a 2-3 sentence summary
+    emphasizing key contributions, novelty, and potential impact.
     """
     improved_prompt = (
-        "Provide a concise, 2-3 sentence summary highlighting the key contributions, novelty, and potential impact of the following research paper content:\n\n" 
-        + text
+        "Provide a concise 2-3 sentence summary of the following research paper content, "
+        "highlighting its key contributions, novelty, and potential impact:\n\n" + text
     )
     summary_output = summarizer(
         improved_prompt,
@@ -126,23 +143,25 @@ def index():
         page = int(request.args.get("page", "1"))
     except ValueError:
         page = 1
-    max_results = 100
+    max_results = 100  # Load 100 papers per page.
     start = (page - 1) * max_results
     fetch_papers(selected_tag, max_results, start)
     
+    # Group papers by day (based on published date in PST) and record a separate time field.
     grouped_papers = defaultdict(list)
     for paper in papers:
         pub = paper.get("published", "No date available")
         try:
             dt = datetime.strptime(pub, "%b %d, %Y %I:%M %p PST")
-            day_key = dt.strftime("%b %d, %Y")
-            time_str = dt.strftime("%I:%M %p PST")
+            day_key = dt.strftime("%b %d, %Y")   # e.g., "Apr 10, 2025"
+            time_str = dt.strftime("%I:%M %p PST")  # e.g., "11:42 PM PST"
         except Exception:
             day_key = pub
             time_str = ""
         paper['time'] = time_str
         grouped_papers[day_key].append(paper)
     
+    # Pass the full papers list to the template for JS-based bookmark lookup.
     return render_template('index.html', grouped_papers=grouped_papers,
                            selected_tag=selected_tag, page=page, papers=papers)
 
@@ -162,23 +181,11 @@ def summarize_paper(paper_id):
     prompt = f"{truncated_text}"
     ai_summary = generate_summary(prompt)
     
-    # Check if the request is AJAX
+    # If AJAX, return JSON; otherwise, render the summary page.
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})
     else:
         return render_template("tweet_summary.html", paper=paper, tweet_summary=ai_summary)
-
-@app.route('/insights/<int:paper_id>')
-def insights(paper_id):
-    try:
-        paper = next(p for p in papers if p['id'] == paper_id)
-    except StopIteration:
-        return "Paper not found", 404
-    if not paper.get("summary"):
-        return "No summary available for generating insights.", 404
-    # For demonstration, we simply echo the summary as the insight. You could replace this with a similar text-generation call.
-    insight_text = "Insight: " + paper["summary"][:150] + "..."
-    return render_template("insights.html", paper=paper, insight=insight_text)
 
 @app.route('/open_pdf/<int:paper_id>')
 def open_pdf(paper_id):
@@ -193,7 +200,10 @@ def open_pdf(paper_id):
 
 @app.route('/bookmarks')
 def bookmarks():
+    # Render the bookmarks page; client-side JS will load bookmark data.
     return render_template('bookmarks.html', papers=papers)
+
+# NOTE: The "/insights" route has been removed as requested.
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)
