@@ -1,0 +1,20 @@
+[0;1;32m●[0m gunicorn.service - Gunicorn instance to serve ai_ui_dashboard
+     Loaded: loaded (]8;;file://ubuntu-s-1vcpu-1gb-sfo3-01/etc/systemd/system/gunicorn.service/etc/systemd/system/gunicorn.service]8;;; [0;1;32menabled[0m; preset: [0;1;32menabled[0m)
+     Active: [0;1;32mactive (running)[0m since Fri 2025-04-11 03:24:50 UTC; 4s ago
+   Main PID: 4422 (gunicorn)
+      Tasks: 7 (limit: 4655)
+     Memory: 502.7M (peak: 502.9M)
+        CPU: 7.735s
+     CGroup: /system.slice/gunicorn.service
+             ├─[0;38;5;245m4422 /root/ai_ui_dashboard/venv/bin/python3 /root/ai_ui_dashboard/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 app:app[0m
+             ├─[0;38;5;245m4423 /root/ai_ui_dashboard/venv/bin/python3 /root/ai_ui_dashboard/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 app:app[0m
+             ├─[0;38;5;245m4424 /root/ai_ui_dashboard/venv/bin/python3 /root/ai_ui_dashboard/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 app:app[0m
+             └─[0;38;5;245m4425 /root/ai_ui_dashboard/venv/bin/python3 /root/ai_ui_dashboard/venv/bin/gunicorn --workers 3 --bind 127.0.0.1:8000 app:app[0m
+
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 systemd[1]: Started gunicorn.service - Gunicorn instance to serve ai_ui_dashboard.
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4422]: [2025-04-11 03:24:50 +0000] [4422] [INFO] Starting gunicorn 23.0.0
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4422]: [2025-04-11 03:24:50 +0000] [4422] [INFO] Listening at: http://127.0.0.1:8000 (4422)
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4422]: [2025-04-11 03:24:50 +0000] [4422] [INFO] Using worker: sync
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4423]: [2025-04-11 03:24:50 +0000] [4423] [INFO] Booting worker with pid: 4423
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4424]: [2025-04-11 03:24:50 +0000] [4424] [INFO] Booting worker with pid: 4424
+Apr 11 03:24:50 ubuntu-s-1vcpu-1gb-sfo3-01 gunicorn[4425]: [2025-04-11 03:24:50 +0000] [4425] [INFO] Booting worker with pid: 4425
