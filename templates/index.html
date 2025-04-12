@@ -64,7 +64,7 @@
                 <a href="{{ url_for('open_pdf', paper_id=paper.id) }}" class="btn btn-primary btn-sm mb-2">
                   <i class="fas fa-file-pdf"></i> Open PDF
                 </a>
-                <!-- Summarize button now triggers a modal -->
+                <!-- Summarize button: opens summarization modal -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
@@ -140,7 +140,7 @@
           </button>
         </div>
         <div class="modal-body">
-          <!-- Customization options -->
+          <!-- Customization Options -->
           <div class="form-group">
             <label for="minLength">Minimum Length (tokens):</label>
             <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
@@ -154,7 +154,14 @@
             <select id="modelSelect" class="form-control">
               <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
               <option value="facebook/bart-large-cnn">BART-Large</option>
+              <option value="google/pegasus-xsum">Pegasus-XSum</option>
             </select>
+          </div>
+          <div class="form-group">
+            <label for="promptInput">Prompt:</label>
+            <textarea id="promptInput" class="form-control" rows="3">
+Provide a concise 2-3 sentence summary for social media audiences. Highlight the paper's key contributions, novelty, and potential impact:
+            </textarea>
           </div>
           <hr>
           <div id="summaryLoading" class="text-center" style="display:none;">
@@ -166,22 +173,22 @@
           </div>
         </div>
         <div class="modal-footer">
-          <button id="generateSummaryBtn" class="btn btn-success">Generate Summary</button>
-          <button id="copySummaryBtn" class="btn btn-primary">Copy Summary</button>
+          <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
+          <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
+          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
           <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- Summarize Button AJAX Handler and Modal Trigger -->
+  <!-- Summarize Button AJAX Handler -->
   <script>
     var currentPaperId = null;
-    
     $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
-      // Reset modal fields if desired (defaults are already set in modal inputs)
-      $("#summaryLoading").show();
+      // Reset modal: show options and hide previous result.
+      $("#summaryLoading").hide();
       $("#summaryContent").hide();
       $("#summaryModal").modal("show");
     });
@@ -190,13 +197,18 @@
       var minLength = $("#minLength").val();
       var maxLength = $("#maxLength").val();
       var model = $("#modelSelect").val();
+      var customPrompt = $("#promptInput").val();
+      $("#summaryLoading").show();
+      $("#summaryContent").hide();
+      
       $.ajax({
         url: "/summarize/" + currentPaperId,
         type: "GET",
         data: {
           min_length: minLength,
           max_length: maxLength,
-          model: model
+          model: model,
+          prompt: customPrompt
         },
         headers: { "X-Requested-With": "XMLHttpRequest" },
         success: function(data) {
@@ -227,7 +239,13 @@
       });
     });
     
-    // More Info Modal Trigger remains unchanged.
+    $("#resummarizeBtn").on("click", function() {
+      $("#generateSummaryBtn").click();
+    });
+  </script>
+  
+  <!-- More Info Modal Trigger -->
+  <script>
     $(document).on("click", ".more-info-btn", function() {
       var title = $(this).data("title");
       var tags = $(this).data("tags");
@@ -247,8 +265,10 @@
       
       $("#detailsModal").modal("show");
     });
+  </script>
   
-    // Bookmark functionality remains unchanged.
+  <!-- Bookmark Functionality -->
+  <script>
     $(document).ready(function(){
       function updateBookmarks() {
         var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
@@ -279,7 +299,7 @@
     });
   </script>
   
-  <!-- Modal for More Info (unchanged) -->
+  <!-- Modal for More Info -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -306,5 +326,4 @@
       </div>
     </div>
   </div>
-  
 {% endblock %}

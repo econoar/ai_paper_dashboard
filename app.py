@@ -14,7 +14,7 @@ app = Flask(__name__)
 # Global list to store papers
 papers = []
 
-# Define desired topics (used for filtering and tagging)
+# Define our desired topics (used for filtering and tagging)
 DESIRED_TOPICS = [
     "reinforcement learning",
     "digital twin",
@@ -29,7 +29,7 @@ DESIRED_TOPICS = [
 # Default summarization model
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
 
-# Initialize the summarization pipeline (default model)
+# Initialize the summarization pipeline with the default model
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
@@ -59,6 +59,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
                 pdf_link = link.get("href")
                 break
         pdf_link = pdf_link or entry.link
+
         published = entry.get("published", "No date available")
         try:
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
@@ -67,8 +68,10 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             published_str = dt_pst.strftime("%b %d, %Y %I:%M %p PST")
         except Exception:
             published_str = published
+
         combined_text = (entry.title + " " + entry.summary).lower()
         tags = [topic for topic in DESIRED_TOPICS if topic in combined_text]
+
         new_papers.append({
             'id': idx,
             'title': entry.title,
@@ -98,15 +101,22 @@ def extract_pdf_text(pdf_url):
         print("Error extracting PDF text:", e)
         return None
 
-def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL):
-    improved_prompt = (
-        "Provide a concise 2-3 sentence summary for social media audiences. "
-        "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
-    )
+def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
+    """
+    Uses the summarization pipeline to produce a concise summary.
+    If custom_prompt is provided, it is prepended to the paper text.
+    """
+    if custom_prompt:
+        prompt_text = custom_prompt + "\n\n" + text
+    else:
+        prompt_text = (
+            "Provide a concise 2-3 sentence summary for social media audiences. "
+            "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
+        )
     if model_name != SUMMARIZER_MODEL:
         temp_summarizer = pipeline("summarization", model=model_name)
         summary_output = temp_summarizer(
-            improved_prompt,
+            prompt_text,
             max_length=max_length,
             min_length=min_length,
             do_sample=False,
@@ -114,7 +124,7 @@ def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_
         )
     else:
         summary_output = summarizer(
-            improved_prompt,
+            prompt_text,
             max_length=max_length,
             min_length=min_length,
             do_sample=False,
@@ -162,8 +172,7 @@ def summarize_paper(paper_id):
     if not pdf_text:
         return jsonify({'error': 'Could not download or extract text from PDF.'}), 404
     truncated_text = pdf_text[:5000]
-    
-    # Read additional parameters from request
+
     try:
         min_length = int(request.args.get("min_length", 80))
         max_length = int(request.args.get("max_length", 300))
@@ -171,8 +180,9 @@ def summarize_paper(paper_id):
         min_length = 80
         max_length = 300
     model_name = request.args.get("model", SUMMARIZER_MODEL)
+    custom_prompt = request.args.get("prompt", None)
     
-    ai_summary = generate_summary(truncated_text, min_length, max_length, model_name)
+    ai_summary = generate_summary(truncated_text, min_length, max_length, model_name, custom_prompt)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})
