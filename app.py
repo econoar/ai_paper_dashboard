@@ -103,15 +103,17 @@ def extract_pdf_text(pdf_url):
 
 def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
     """
-    Uses the summarization pipeline to produce a concise summary.
-    If custom_prompt is provided, it is prepended to the paper text.
+    Uses the summarization pipeline to produce a detailed summary.
+    If a custom_prompt is provided, it will be prepended to the text.
+    Otherwise, uses the default prompt below.
     """
     if custom_prompt:
         prompt_text = custom_prompt + "\n\n" + text
     else:
         prompt_text = (
-            "Provide a concise 2-3 sentence summary for social media audiences. "
-            "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
+            "Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. "
+            "In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential "
+            "real-world impact. Use accessible, engaging language to help readers quickly grasp the significance and novelty of the research:\n\n" + text
         )
     if model_name != SUMMARIZER_MODEL:
         temp_summarizer = pipeline("summarization", model=model_name)
