@@ -58,16 +58,7 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <a href="{{ paper.link }}" target="_blank" class="btn btn-info btn-sm mb-2">
-                  <i class="fas fa-external-link-alt"></i> arXiv
-                </a>
-                <a href="{{ url_for('open_pdf', paper_id=paper.id) }}" class="btn btn-primary btn-sm mb-2">
-                  <i class="fas fa-file-pdf"></i> Open PDF
-                </a>
-                <!-- Summarize button: opens summarization modal -->
-                <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
-                  <i class="fas fa-lightbulb"></i> Summarize
-                </button>
+                <!-- More Info button moved to the top -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -79,6 +70,11 @@
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
+                <!-- Summarize button -->
+                <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
+                  <i class="fas fa-lightbulb"></i> Summarize
+                </button>
+                <!-- Bookmark button -->
                 <button class="btn btn-warning btn-sm bookmark-btn mb-2" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
@@ -126,121 +122,6 @@
               });
           }
       });
-    });
-  </script>
-  
-  <!-- Summarize Modal with Options -->
-  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <div class="modal-body">
-          <!-- Customization Options -->
-          <div class="form-group">
-            <label for="minLength">Minimum Length (tokens):</label>
-            <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
-          </div>
-          <div class="form-group">
-            <label for="maxLength">Maximum Length (tokens):</label>
-            <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
-          </div>
-          <div class="form-group">
-            <label for="modelSelect">Model:</label>
-            <select id="modelSelect" class="form-control">
-              <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
-              <option value="t5-small">T5-Small</option>
-              <option value="facebook/bart-base">BART-Base</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="promptInput">Prompt:</label>
-            <textarea id="promptInput" class="form-control" rows="3">
-Provide a concise 2-3 sentence summary for social media audiences. Highlight the paper's key contributions, novelty, and potential impact:
-            </textarea>
-          </div>
-          <hr>
-          <div id="summaryLoading" class="text-center" style="display:none;">
-            <span class="spinner-border"></span>
-            <p>Generating summary...</p>
-          </div>
-          <div id="summaryContent" style="display:none;">
-            <p id="summaryText"></p>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
-          <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
-          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  
-  <!-- Summarize Button AJAX Handler -->
-  <script>
-    var currentPaperId = null;
-    $(document).on("click", ".summarize-btn", function() {
-      currentPaperId = $(this).data("paper-id");
-      // Reset modal: show options and hide previous result.
-      $("#summaryLoading").hide();
-      $("#summaryContent").hide();
-      $("#summaryModal").modal("show");
-    });
-    
-    $("#generateSummaryBtn").on("click", function() {
-      var minLength = $("#minLength").val();
-      var maxLength = $("#maxLength").val();
-      var model = $("#modelSelect").val();
-      var customPrompt = $("#promptInput").val();
-      $("#summaryLoading").show();
-      $("#summaryContent").hide();
-      
-      $.ajax({
-        url: "/summarize/" + currentPaperId,
-        type: "GET",
-        data: {
-          min_length: minLength,
-          max_length: maxLength,
-          model: model,
-          prompt: customPrompt
-        },
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        success: function(data) {
-          if(data.summary) {
-            $("#summaryText").text(data.summary);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
-          } else if(data.error) {
-            $("#summaryText").text("Error: " + data.error);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
-          }
-        },
-        error: function() {
-          $("#summaryText").text("Error generating summary.");
-          $("#summaryLoading").hide();
-          $("#summaryContent").show();
-        }
-      });
-    });
-    
-    $("#copySummaryBtn").on("click", function() {
-      var summaryText = $("#summaryText").text();
-      navigator.clipboard.writeText(summaryText).then(function() {
-          alert("Summary copied to clipboard!");
-      }, function(err) {
-          alert("Error copying summary: " + err);
-      });
-    });
-    
-    $("#resummarizeBtn").on("click", function() {
-      $("#generateSummaryBtn").click();
     });
   </script>
   
@@ -299,31 +180,117 @@ Provide a concise 2-3 sentence summary for social media audiences. Highlight the
     });
   </script>
   
-  <!-- Modal for More Info -->
-  <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
+  <!-- Summarize Modal with Options -->
+  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="detailsModalLabel">Paper Details</h5>
+          <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
              <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
-          <p><strong>Title:</strong> <span id="modalTitle"></span></p>
-          <p><strong>Published:</strong> <span id="modalPublished"></span></p>
-          <p><strong>Time:</strong> <span id="modalTime"></span></p>
-          <p><strong>Tags:</strong> <span id="modalTags"></span></p>
-          <p><strong>arXiv Link:</strong> <a href="#" target="_blank" id="modalLink"></a></p>
-          <p><strong>PDF Link:</strong> <a href="#" target="_blank" id="modalPdf"></a></p>
+          <!-- Customization Options -->
+          <div class="form-group">
+            <label for="minLength">Minimum Length (tokens):</label>
+            <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
+          </div>
+          <div class="form-group">
+            <label for="maxLength">Maximum Length (tokens):</label>
+            <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
+          </div>
+          <div class="form-group">
+            <label for="modelSelect">Model:</label>
+            <select id="modelSelect" class="form-control">
+              <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
+              <option value="t5-small">T5-Small</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="promptInput">Prompt:</label>
+            <textarea id="promptInput" class="form-control" rows="3">
+Provide a concise 2-3 sentence summary for social media audiences. Highlight the paper's key contributions, novelty, and potential impact:
+            </textarea>
+          </div>
           <hr>
-          <p><strong>Abstract:</strong></p>
-          <p id="modalSummary"></p>
+          <div id="summaryLoading" class="text-center" style="display:none;">
+            <span class="spinner-border"></span>
+            <p>Generating summary...</p>
+          </div>
+          <div id="summaryContent" style="display:none;">
+            <p id="summaryText"></p>
+          </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
+          <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
+          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
+          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
+  
+  <!-- Summarize Button AJAX Handler -->
+  <script>
+    var currentPaperId = null;
+    $(document).on("click", ".summarize-btn", function() {
+      currentPaperId = $(this).data("paper-id");
+      $("#summaryLoading").hide();
+      $("#summaryContent").hide();
+      $("#summaryModal").modal("show");
+    });
+    
+    $("#generateSummaryBtn").on("click", function() {
+      var minLength = $("#minLength").val();
+      var maxLength = $("#maxLength").val();
+      var model = $("#modelSelect").val();
+      var customPrompt = $("#promptInput").val();
+      $("#summaryLoading").show();
+      $("#summaryContent").hide();
+      
+      $.ajax({
+        url: "/summarize/" + currentPaperId,
+        type: "GET",
+        data: {
+          min_length: minLength,
+          max_length: maxLength,
+          model: model,
+          prompt: customPrompt
+        },
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        success: function(data) {
+          if(data.summary) {
+            $("#summaryText").text(data.summary);
+            $("#summaryLoading").hide();
+            $("#summaryContent").show();
+          } else if(data.error) {
+            $("#summaryText").text("Error: " + data.error);
+            $("#summaryLoading").hide();
+            $("#summaryContent").show();
+          }
+        },
+        error: function() {
+          $("#summaryText").text("Error generating summary.");
+          $("#summaryLoading").hide();
+          $("#summaryContent").show();
+        }
+      });
+    });
+    
+    $("#copySummaryBtn").on("click", function() {
+      var summaryText = $("#summaryText").text();
+      navigator.clipboard.writeText(summaryText).then(function() {
+          alert("Summary copied to clipboard!");
+      }, function(err) {
+          alert("Error copying summary: " + err);
+      });
+    });
+    
+    $("#resummarizeBtn").on("click", function() {
+      $("#generateSummaryBtn").click();
+    });
+  </script>
+  
 {% endblock %}
