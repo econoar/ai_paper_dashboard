@@ -1,35 +1,69 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>AI Papers Dashboard</title>
-    <!-- Use a modern Bootswatch theme -->
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cosmo/bootstrap.min.css">
-    <!-- Font Awesome for icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" 
-          integrity="sha512-Fo3rlrZj/k7ujTnH/PRd1aPfX6Fq38Ll7tN+61HhNOc2+HfYvDmI1r/X9TT3bN7Ol6+okxj8l6MwyHA3zeG8w==" 
-          crossorigin="anonymous" referrerpolicy="no-referrer" />
-    <!-- jQuery UI for Autocomplete -->
-    <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
-    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" crossorigin="anonymous"></script>
-    <!-- Bootstrap's JS bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+  <meta charset="UTF-8">
+  <title>AI Papers Dashboard</title>
+  <!-- Using a modern Bootswatch theme -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cosmo/bootstrap.min.css">
+  <!-- Font Awesome for icons (removed integrity for compatibility) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- jQuery UI for Autocomplete -->
+  <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js" crossorigin="anonymous"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js" crossorigin="anonymous"></script>
+  <!-- Bootstrap's JS bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js" crossorigin="anonymous"></script>
+
+  <style>
+    /* Custom CSS to ensure consistent button spacing and mobile responsiveness */
+    .d-flex.flex-column > button {
+      margin-bottom: 0.5rem;
+    }
+    @media (max-width: 576px) {
+      .table {
+        font-size: 0.85rem;
+      }
+      .btn {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-      <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
-      <div class="navbar-nav">
-        <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
-        <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
-      </div>
-    </nav>
-    <div class="container mt-4">
-      {% block content %}{% endblock %}
+  <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
+    <div class="navbar-nav">
+      <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
+      <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
     </div>
-    <!-- Provide full list of papers as a JS variable; default to empty if not provided -->
-    <script>
-      var allPapers = {{ papers|default([])|tojson }};
-    </script>
+  </nav>
+  <div class="container mt-4">
+    {% block content %}{% endblock %}
+  </div>
+
+  <!-- Output the full list of papers for client JS lookup; defaults to an empty array if not provided -->
+  <script>
+    var allPapers = {{ papers|default([])|tojson }};
+  </script>
+
+  <!-- Toast Notification Container -->
+  <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;">
+    <div id="toastNotification" class="toast" data-delay="3000">
+      <div class="toast-header">
+        <strong class="mr-auto">Notification</strong>
+        <small class="text-muted">now</small>
+        <button type="button" class="ml-2 mb-1 close" data-dismiss="toast">&times;</button>
+      </div>
+      <div class="toast-body" id="toastBody">
+        <!-- Notification text goes here -->
+      </div>
+    </div>
+  </div>
+  <script>
+    function showToast(message) {
+      $("#toastBody").text(message);
+      $("#toastNotification").toast("show");
+    }
+  </script>
 </body>
 </html>

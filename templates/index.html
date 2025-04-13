@@ -8,7 +8,7 @@
     <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title...">
   </div>
   
-  <!-- Filter Form -->
+  <!-- Filter Form with Refresh Button -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
     <select name="tag" id="tag" class="form-control mr-4">
@@ -22,7 +22,8 @@
       <option value="self-supervised learning" {% if selected_tag == "self-supervised learning" %} selected {% endif %}>Self-supervised Learning</option>
       <option value="federated learning" {% if selected_tag == "federated learning" %} selected {% endif %}>Federated Learning</option>
     </select>
-    <button type="submit" class="btn btn-primary">Apply Filter</button>
+    <button type="submit" class="btn btn-primary mr-2">Apply Filter</button>
+    <button type="button" id="refreshButton" class="btn btn-info">Refresh</button>
   </form>
   
   {% for day, day_papers in grouped_papers.items() %}
@@ -58,7 +59,7 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- "More Info" button -->
+                <!-- More Info button at the top -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -70,13 +71,17 @@
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
-                <!-- "Summarize" button -->
+                <!-- Summarize button -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
-                <!-- "Bookmark" button -->
-                <button class="btn btn-warning btn-sm bookmark-btn mb-2" data-paper-id="{{ paper.id }}">
+                <!-- Bookmark button -->
+                <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
+                </button>
+                <!-- Share button -->
+                <button class="btn btn-dark btn-sm mb-2 share-btn" data-title="{{ paper.title }}" data-summary="{{ paper.summary | replace('\n', ' ') }}">
+                  <i class="fas fa-share-alt"></i> Share
                 </button>
               </div>
             </td>
@@ -94,13 +99,9 @@
           <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page-1) }}">Previous</a>
         </li>
       {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#">Previous</a>
-        </li>
+        <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
       {% endif %}
-      <li class="page-item active">
-        <a class="page-link" href="#">{{ page }}</a>
-      </li>
+      <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
       <li class="page-item">
         <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page+1) }}">Next</a>
       </li>
@@ -122,6 +123,20 @@
               });
           }
       });
+    });
+    
+    // Refresh button reloads the page.
+    $("#refreshButton").on("click", function() {
+      window.location.reload();
+    });
+    
+    // Share button for Twitter sharing.
+    $(document).on("click", ".share-btn", function() {
+      var title = $(this).data("title");
+      var summary = $(this).data("summary");
+      var tweetText = encodeURIComponent(title + " — " + summary);
+      var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
+      window.open(twitterUrl, "_blank");
     });
   </script>
   
@@ -155,7 +170,7 @@
           <div class="form-group">
             <label for="promptInput">Prompt:</label>
             <textarea id="promptInput" class="form-control" rows="3">
-Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential real-world impact. Use accessible, engaging language:
+Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential real-world impact. Use clear, engaging language:
             </textarea>
           </div>
           <hr>
@@ -177,7 +192,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     </div>
   </div>
   
-  <!-- Summarize Button AJAX Handler -->
+  <!-- Summarize AJAX Handler -->
   <script>
     var currentPaperId = null;
     $(document).on("click", ".summarize-btn", function() {
@@ -227,9 +242,9 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     $("#copySummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       navigator.clipboard.writeText(summaryText).then(function() {
-          alert("Summary copied to clipboard!");
+          showToast("Summary copied to clipboard!");
       }, function(err) {
-          alert("Error copying summary: " + err);
+          showToast("Error copying summary: " + err);
       });
     });
     

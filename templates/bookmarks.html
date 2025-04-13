@@ -27,7 +27,6 @@
           tbody.append("<tr><td colspan='5'>No bookmarks yet.</td></tr>");
       } else {
           bookmarks.forEach(function(paper){
-              // Create a short excerpt for the summary
               var excerpt = "";
               if (paper.summary && paper.summary.length > 200) {
                   excerpt = paper.summary.substring(0, 200) + "...";
@@ -58,6 +57,9 @@
                       "<button class='btn btn-warning btn-sm bookmark-btn mb-2' data-paper-id='" + paper.id + "'>" +
                           "<i class='far fa-star'></i> Bookmark" +
                       "</button>" +
+                      "<button class='btn btn-dark btn-sm mb-2 share-btn' data-title='" + paper.title + "' data-summary='" + (paper.summary || "").replace(/\n/g, ' ') + "'>" +
+                          "<i class='fas fa-share-alt'></i> Share" +
+                      "</button>" +
                     "</div>" +
                   "</td>" +
                   "</tr>";
@@ -65,9 +67,41 @@
           });
       }
     });
+    
+    // More Info Modal Trigger on bookmarks page (same as main page)
+    $(document).on("click", ".more-info-btn", function() {
+      var title = $(this).data("title");
+      var tags = $(this).data("tags");
+      var published = $(this).data("published");
+      var time = $(this).data("time");
+      var link = $(this).data("link");
+      var pdf = $(this).data("pdf");
+      var summary = $(this).data("summary");
+      
+      $("#modalTitle").text(title);
+      $("#modalTags").text(tags || "N/A");
+      $("#modalPublished").text(published);
+      $("#modalTime").text(time);
+      $("#modalLink").attr("href", link).text(link);
+      $("#modalPdf").attr("href", pdf).text(pdf);
+      $("#modalSummary").text(summary);
+      
+      $("#detailsModal").modal("show");
+    });
+    
+    // Share Button for bookmarks
+    $(document).on("click", ".share-btn", function() {
+      var title = $(this).data("title");
+      var summary = $(this).data("summary");
+      var tweetText = encodeURIComponent(title + " — " + summary);
+      var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
+      window.open(twitterUrl, "_blank");
+    });
+    
+    // Bookmark functionality on bookmarks page is already initialized in base.js (if separate) or in index.html script; if needed, reinitialize here.
   </script>
-
-  <!-- More Info Modal (added to bookmarks page) -->
+  
+  <!-- More Info Modal for bookmarks (reuse same modal as index) -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
@@ -94,28 +128,5 @@
       </div>
     </div>
   </div>
-
-  <!-- More Info Modal Trigger Script -->
-  <script>
-    $(document).on("click", ".more-info-btn", function() {
-      var title = $(this).data("title");
-      var tags = $(this).data("tags");
-      var published = $(this).data("published");
-      var time = $(this).data("time");
-      var link = $(this).data("link");
-      var pdf = $(this).data("pdf");
-      var summary = $(this).data("summary");
-      
-      $("#modalTitle").text(title);
-      $("#modalTags").text(tags || "N/A");
-      $("#modalPublished").text(published);
-      $("#modalTime").text(time);
-      $("#modalLink").attr("href", link).text(link);
-      $("#modalPdf").attr("href", pdf).text(pdf);
-      $("#modalSummary").text(summary);
-      
-      $("#detailsModal").modal("show");
-    });
-  </script>
   
 {% endblock %}
