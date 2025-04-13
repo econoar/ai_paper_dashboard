@@ -5,39 +5,31 @@
   <h1>About This Dashboard</h1>
   <hr>
   <p>
-    Welcome to the AI Research Papers Dashboard! This site is designed to help you quickly ingest, review, and share the latest research papers in artificial intelligence and machine learning.
+    Welcome to the AI Research Papers Dashboard! This site is designed to help you quickly ingest, review, and share 
+    the latest research papers in artificial intelligence and machine learning.
   </p>
-
   <h2>How It Works</h2>
   <p>
     <strong>Broad Filtering:</strong><br>
-    Our dashboard queries the arXiv database to retrieve papers from three broad categories:
+    Our dashboard queries the arXiv database for papers in three broad categories – 
+    <a href="https://arxiv.org/list/cs.AI/recent" target="_blank">cs.AI</a>, 
+    <a href="https://arxiv.org/list/cs.LG/recent" target="_blank">cs.LG</a>, and 
+    <a href="https://arxiv.org/list/stat.ML/recent" target="_blank">stat.ML</a>.
   </p>
-  <ul>
-    <li>
-      <a href="https://arxiv.org/list/cs.AI/recent" target="_blank">cs.AI – Artificial Intelligence</a>
-    </li>
-    <li>
-      <a href="https://arxiv.org/list/cs.LG/recent" target="_blank">cs.LG – Machine Learning</a>
-    </li>
-    <li>
-      <a href="https://arxiv.org/list/stat.ML/recent" target="_blank">stat.ML – Statistical Machine Learning</a>
-    </li>
-  </ul>
-
   <p>
     <strong>Secondary Keyword Filtering:</strong><br>
-    After retrieving papers from these categories, our system checks each paper's title and abstract for specific keywords such as “reinforcement learning,” “digital twin,” “agent coordination,” etc. If none of those terms are detected, the Tags column displays "N/A."
+    After retrieving papers from these categories, our system checks each paper’s title and abstract for specific keywords such as 
+    “reinforcement learning,” “digital twin,” “agent coordination,” etc. If none of these keywords are found, the Tags column displays "N/A." 
+    This means that while the paper still belongs to one of our broad categories, none of our preset topics were explicitly detected.
   </p>
-
   <h2>Key Features</h2>
   <ul>
     <li><strong>Paper Listings:</strong> Papers are grouped by publication day and show details such as time (in 24‑hour format), detected keywords (or “N/A”), title, and abstract excerpt.</li>
     <li><strong>More Info:</strong> Click the "More Info" button to view detailed information in a modal.</li>
-    <li><strong>Summarize:</strong> Generate an AI-crafted summary with customizable options (token lengths, model selection, and an editable prompt) designed for social media sharing.</li>
-    <li><strong>Bookmark:</strong> Save papers of interest in your browser, and view them on the Bookmarks page.</li>
+    <li><strong>Summarize:</strong> Generate an AI-crafted summary with customizable options, designed for social media sharing.</li>
+    <li><strong>Bookmark:</strong> Save papers of interest for later review on the Bookmarks page.</li>
     <li><strong>Social Sharing:</strong> Share a paper’s title, summary, and PDF link directly to Twitter.</li>
-    <li><strong>Refresh & Search:</strong> Manually refresh the list and use autocomplete search to quickly find papers by title.</li>
+    <li><strong>Refresh & Search:</strong> Use the manual refresh button and the autocomplete search bar to quickly navigate the list of papers.</li>
   </ul>
 </div>
 {% endblock %}

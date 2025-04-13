@@ -10,48 +10,18 @@ from collections import defaultdict
 from datetime import datetime
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
 
-# Flask & SQLAlchemy Setup
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///summaries.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-from flask_sqlalchemy import SQLAlchemy
-db = SQLAlchemy(app)
-
-# Redis caching setup
-import redis
-import json
-cache = redis.Redis(host='localhost', port=6379, db=0, decode_responses=True)
-
-def cache_set(key, data, expire_seconds=600):
-    cache.set(key, json.dumps(data), ex=expire_seconds)
-
-def cache_get(key):
-    data = cache.get(key)
-    if data:
-        return json.loads(data)
-    return None
-
-# Database model for generated summaries
-class Summary(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    paper_id = db.Column(db.Integer, nullable=False, unique=True)
-    summary_text = db.Column(db.Text, nullable=False)
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
-
-    def __repr__(self):
-        return f"<Summary paper_id={self.paper_id}>"
-
-# Global list for papers
+# Global list to store papers
 papers = []
 
-# Define desired topics (full names)
+# Define desired topics (full keyword names)
 DESIRED_TOPICS = [
     "reinforcement learning",
     "digital twin",
     "agent coordination",
     "multi-agent systems",
-    "transformers",  # We'll handle transformer variations via regex
+    "transformers",  # Regex will handle variations
     "explainable ai",
     "self-supervised learning",
     "federated learning"
@@ -59,6 +29,8 @@ DESIRED_TOPICS = [
 
 # Default summarization model
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
+
+# Initialize the summarization pipeline with the default model
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
@@ -99,12 +71,6 @@ def get_tags(combined_text):
 
 def fetch_papers(selected_tag="all", max_results=100, start=0):
     global papers
-    cache_key = f"papers:{selected_tag}:{start}:{max_results}"
-    cached = cache_get(cache_key)
-    if cached:
-        papers = cached
-        return
-
     query_url = build_query(selected_tag, max_results, start)
     feed = feedparser.parse(query_url)
     new_papers = []
@@ -121,6 +87,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
             dt = dt.replace(tzinfo=ZoneInfo("UTC"))
             dt_pst = dt.astimezone(ZoneInfo("America/Los_Angeles"))
+            # Format in 24-hour time
             published_str = dt_pst.strftime("%b %d, %Y %H:%M")
         except Exception:
             published_str = published
@@ -138,7 +105,6 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             'published': published_str
         })
     papers = new_papers
-    cache_set(cache_key, papers, expire_seconds=600)
 
 def extract_pdf_text(pdf_url):
     try:
@@ -221,32 +187,21 @@ def summarize_paper(paper_id):
     pdf_url = paper.get("pdf_link")
     if not pdf_url:
         return jsonify({'error': 'No PDF URL available for this paper.'}), 404
+    pdf_text = extract_pdf_text(pdf_url)
+    if not pdf_text:
+        return jsonify({'error': 'Could not download or extract text from PDF.'}), 404
+    truncated_text = pdf_text[:5000]
 
-    # Check persistent storage for an existing summary
-    from app import Summary  # Ensure Summary is imported from the same file
-    existing = Summary.query.filter_by(paper_id=paper_id).first()
-    if existing:
-        ai_summary = existing.summary_text
-    else:
-        pdf_text = extract_pdf_text(pdf_url)
-        if not pdf_text:
-            return jsonify({'error': 'Could not download or extract text from PDF.'}), 404
-        truncated_text = pdf_text[:5000]
-
-        try:
-            min_length = int(request.args.get("min_length", 80))
-            max_length = int(request.args.get("max_length", 300))
-        except ValueError:
-            min_length = 80
-            max_length = 300
-        model_name = request.args.get("model", SUMMARIZER_MODEL)
-        custom_prompt = request.args.get("prompt", None)
+    try:
+        min_length = int(request.args.get("min_length", 80))
+        max_length = int(request.args.get("max_length", 300))
+    except ValueError:
+        min_length = 80
+        max_length = 300
+    model_name = request.args.get("model", SUMMARIZER_MODEL)
+    custom_prompt = request.args.get("prompt", None)
     
-        ai_summary = generate_summary(truncated_text, min_length, max_length, model_name, custom_prompt)
-        # Save to persistent storage
-        new_summary = Summary(paper_id=paper_id, summary_text=ai_summary)
-        db.session.add(new_summary)
-        db.session.commit()
+    ai_summary = generate_summary(truncated_text, min_length, max_length, model_name, custom_prompt)
     
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})

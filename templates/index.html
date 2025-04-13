@@ -3,12 +3,10 @@
 {% block content %}
   <h1>Highly Relevant AI Research Papers</h1>
 
-  <!-- Search Bar -->
   <div class="mb-3">
     <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title...">
   </div>
 
-  <!-- Filter Form with Refresh Button -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
     <select name="tag" id="tag" class="form-control mr-4">
@@ -59,7 +57,6 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- More Info -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -71,11 +68,9 @@
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
-                <!-- Summarize -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
-                <!-- Bookmark -->
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
@@ -87,7 +82,6 @@
     </table>
   {% endfor %}
 
-  <!-- Pagination -->
   <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
       {% if page > 1 %}
@@ -100,7 +94,6 @@
     </ul>
   </nav>
 
-  <!-- Autocomplete for Search -->
   <script>
     $(function() {
       var titles = [];
@@ -133,7 +126,6 @@
           </button>
         </div>
         <div class="modal-body">
-          <!-- Customization Options -->
           <div class="form-group">
             <label for="minLength">Minimum Length (tokens):</label>
             <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
@@ -174,7 +166,6 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     </div>
   </div>
 
-  <!-- Summarize Modal AJAX Handler -->
   <script>
     var currentPaperId = null;
     var currentPaperTitle = "";
@@ -244,7 +235,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       window.open(twitterUrl, "_blank");
     });
   </script>
-  
+
   <!-- More Info Modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -273,7 +264,6 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     </div>
   </div>
 
-  <!-- More Info Modal Trigger Script -->
   <script>
     $(document).on("click", ".more-info-btn", function() {
       var title = $(this).data("title");
@@ -295,8 +285,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       $("#detailsModal").modal("show");
     });
   </script>
-  
-  <!-- Bookmark Functionality -->
+
   <script>
     $(document).ready(function(){
       function updateBookmarks() {
@@ -310,9 +299,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           }
         });
       }
-      
       updateBookmarks();
-      
       $(document).on("click", ".bookmark-btn", function(){
           var paperId = $(this).data("paper-id").toString();
           var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
@@ -327,5 +314,4 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       });
     });
   </script>
-  
 {% endblock %}
