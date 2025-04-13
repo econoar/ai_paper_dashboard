@@ -21,12 +21,23 @@
         font-size: 0.85rem;
       }
     }
+    /* Footer styling */
+    footer {
+      background-color: #f8f9fa;
+      padding: 1rem;
+      text-align: center;
+      margin-top: 2rem;
+      border-top: 1px solid #e7e7e7;
+    }
+    footer a {
+      text-decoration: none;
+      color: #007bff;
+    }
   </style>
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <!-- Updated brand name -->
-    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers</a>
+    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
     <div class="navbar-nav">
       <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
       <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
@@ -37,12 +48,15 @@
     {% block content %}{% endblock %}
   </div>
 
-  <!-- Expose papers for client-side scripts -->
+  <!-- Footer with GitHub link -->
+  <footer>
+    <p>View this project on <a href="https://github.com/econoar/ai_paper_dashboard" target="_blank">GitHub</a></p>
+  </footer>
+
   <script>
     var allPapers = {{ papers|default([])|tojson }};
   </script>
 
-  <!-- Toast Notification -->
   <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;">
     <div id="toastNotification" class="toast" data-delay="3000">
       <div class="toast-header">
