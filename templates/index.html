@@ -3,11 +3,11 @@
 {% block content %}
   <h1>Highly Relevant AI Research Papers</h1>
 
-  <!-- Search Bar with Autocomplete -->
+  <!-- Search Bar -->
   <div class="mb-3">
     <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title...">
   </div>
-  
+
   <!-- Filter Form with Refresh Button -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
@@ -25,10 +25,9 @@
     <button type="submit" class="btn btn-primary mr-2">Apply Filter</button>
     <button type="button" id="refreshButton" class="btn btn-info">Refresh</button>
   </form>
-  
+
   {% for day, day_papers in grouped_papers.items() %}
     <h3>{{ day }}</h3>
-    <!-- Use fixed table layout with specified widths -->
     <table class="table table-striped table-bordered" style="table-layout: fixed; width: 100%;">
       <thead>
         <tr>
@@ -60,7 +59,7 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- More Info button -->
+                <!-- More Info -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -72,11 +71,11 @@
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
-                <!-- Summarize button -->
+                <!-- Summarize -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
-                <!-- Bookmark button -->
+                <!-- Bookmark -->
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
@@ -87,24 +86,20 @@
       </tbody>
     </table>
   {% endfor %}
-  
-  <!-- Pagination Controls -->
+
+  <!-- Pagination -->
   <nav aria-label="Page navigation">
     <ul class="pagination justify-content-center">
       {% if page > 1 %}
-        <li class="page-item">
-          <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page-1) }}">Previous</a>
-        </li>
+        <li class="page-item"><a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page-1) }}">Previous</a></li>
       {% else %}
         <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
       {% endif %}
       <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
-      <li class="page-item">
-        <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page+1) }}">Next</a>
-      </li>
+      <li class="page-item"><a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page+1) }}">Next</a></li>
     </ul>
   </nav>
-  
+
   <!-- Autocomplete for Search -->
   <script>
     $(function() {
@@ -121,14 +116,13 @@
           }
       });
     });
-    
-    // Refresh button
+
     $("#refreshButton").on("click", function() {
       window.location.reload();
     });
   </script>
-  
-  <!-- Summarize Modal with Options -->
+
+  <!-- Summarize Modal -->
   <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -173,14 +167,13 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
         <div class="modal-footer">
           <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
           <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <!-- Share Summary button replaces re-summarize -->
           <button id="shareSummaryBtn" class="btn btn-dark">Share Summary</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
-  
+
   <!-- Summarize Modal AJAX Handler -->
   <script>
     var currentPaperId = null;
@@ -279,7 +272,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       </div>
     </div>
   </div>
-  
+
   <!-- More Info Modal Trigger Script -->
   <script>
     $(document).on("click", ".more-info-btn", function() {

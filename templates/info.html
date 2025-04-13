@@ -27,30 +27,17 @@
 
   <p>
     <strong>Secondary Keyword Filtering:</strong><br>
-    After retrieving papers from these categories, our system further checks each paper's title and abstract for specific keywords such as “reinforcement learning,” “digital twin,” “agent coordination,” and others. If none of these terms are detected, the Tags column will display "N/A." This simply means that none of your preset keywords were found in the paper—even though it still belongs to one of the broad categories.
+    After retrieving papers from these categories, our system checks each paper's title and abstract for specific keywords such as “reinforcement learning,” “digital twin,” “agent coordination,” etc. If none of those terms are detected, the Tags column displays "N/A."
   </p>
 
   <h2>Key Features</h2>
   <ul>
-    <li>
-      <strong>Paper Listings:</strong> Papers are grouped by publication day, showing key details such as time (PST), detected keywords (or “N/A”), the title, and an abstract excerpt.
-    </li>
-    <li>
-      <strong>More Info:</strong> Click the "More Info" button to view detailed paper information in a modal window.
-    </li>
-    <li>
-      <strong>Summarize:</strong> Generate an AI-crafted summary in a customizable modal. You can adjust options such as minimum and maximum token lengths, choose from different summarization models, and even edit a default prompt. The summary is tailored for sharing on social media.
-    </li>
-    <li>
-      <strong>Bookmark:</strong> Save papers of interest to your bookmarks. Bookmarked papers are stored locally in your browser, and you can view them on a dedicated Bookmarks page.
-    </li>
-    <li>
-      <strong>Social Sharing:</strong> Once a summary is generated, you can share the paper's title, summary, and a PDF link directly to Twitter.
-    </li>
-    <li>
-      <strong>Refresh & Search:</strong> A manual refresh button lets you update the list on demand while an integrated autocomplete search bar helps you quickly find papers by title.
-    </li>
+    <li><strong>Paper Listings:</strong> Papers are grouped by publication day and show details such as time (in 24‑hour format), detected keywords (or “N/A”), title, and abstract excerpt.</li>
+    <li><strong>More Info:</strong> Click the "More Info" button to view detailed information in a modal.</li>
+    <li><strong>Summarize:</strong> Generate an AI-crafted summary with customizable options (token lengths, model selection, and an editable prompt) designed for social media sharing.</li>
+    <li><strong>Bookmark:</strong> Save papers of interest in your browser, and view them on the Bookmarks page.</li>
+    <li><strong>Social Sharing:</strong> Share a paper’s title, summary, and PDF link directly to Twitter.</li>
+    <li><strong>Refresh & Search:</strong> Manually refresh the list and use autocomplete search to quickly find papers by title.</li>
   </ul>
-  
 </div>
 {% endblock %}
