@@ -129,7 +129,7 @@
         <div class="modal-header">
           <h5 class="modal-title" id="detailsModalLabel">Paper Details</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close">
-             <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
@@ -148,24 +148,4 @@
       </div>
     </div>
   </div>
-
-  <script>
-    $(document).on("click", ".more-info-btn", function() {
-      var title = $(this).data("title");
-      var tags = $(this).data("tags");
-      var published = $(this).data("published");
-      var link = $(this).data("link");
-      var pdf = $(this).data("pdf");
-      var summary = $(this).data("summary");
-      
-      $("#modalTitle").text(title);
-      $("#modalTags").text(tags || "N/A");
-      $("#modalPublished").text(published);
-      $("#modalLink").attr("href", link).text(link);
-      $("#modalPdf").attr("href", pdf).text(pdf);
-      $("#modalSummary").text(summary);
-      
-      $("#detailsModal").modal("show");
-    });
-  </script>
 {% endblock %}
