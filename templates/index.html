@@ -1,8 +1,7 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <!-- Updated Header and Subheading -->
-  <h1>AI Research Papers</h1>
+  <h1>Highly Relevant AI Research Papers</h1>
 
   <!-- Search Bar with Autocomplete -->
   <div class="mb-3">
@@ -27,17 +26,17 @@
     <button type="button" id="refreshButton" class="btn btn-info">Refresh</button>
   </form>
   
-  <!-- Loop over each day and display the papers -->
   {% for day, day_papers in grouped_papers.items() %}
     <h3>{{ day }}</h3>
-    <table class="table table-striped table-bordered">
+    <!-- Use fixed table layout with specified widths -->
+    <table class="table table-striped table-bordered" style="table-layout: fixed; width: 100%;">
       <thead>
         <tr>
-          <th>Time (PST)</th>
-          <th>Tags</th>
+          <th style="white-space: nowrap; width: 80px;">Time (PST)</th>
+          <th style="width: 120px;">Tags</th>
           <th>Title</th>
           <th>Abstract Excerpt</th>
-          <th>Actions</th>
+          <th style="width: 130px;">Actions</th>
         </tr>
       </thead>
       <tbody>
@@ -61,7 +60,7 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- More Info button (moved to the top) -->
+                <!-- More Info button -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -81,7 +80,6 @@
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
-                <!-- Optionally, you could add a Share button here on the main page if desired -->
               </div>
             </td>
           </tr>
@@ -98,13 +96,9 @@
           <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page-1) }}">Previous</a>
         </li>
       {% else %}
-        <li class="page-item disabled">
-          <a class="page-link" href="#">Previous</a>
-        </li>
+        <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
       {% endif %}
-      <li class="page-item active">
-        <a class="page-link" href="#">{{ page }}</a>
-      </li>
+      <li class="page-item active"><a class="page-link" href="#">{{ page }}</a></li>
       <li class="page-item">
         <a class="page-link" href="{{ url_for('index', tag=selected_tag, page=page+1) }}">Next</a>
       </li>
@@ -128,7 +122,7 @@
       });
     });
     
-    // Refresh button reloads the page.
+    // Refresh button
     $("#refreshButton").on("click", function() {
       window.location.reload();
     });
@@ -179,7 +173,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
         <div class="modal-footer">
           <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
           <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <!-- Replace Re-summarize with Share Summary -->
+          <!-- Share Summary button replaces re-summarize -->
           <button id="shareSummaryBtn" class="btn btn-dark">Share Summary</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
@@ -195,7 +189,6 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     
     $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
-      // Retrieve paper data from allPapers array
       var paper = allPapers.find(function(p) { return p.id == currentPaperId; });
       if (paper) {
         currentPaperTitle = paper.title;
@@ -213,7 +206,6 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       var customPrompt = $("#promptInput").val();
       $("#summaryLoading").show();
       $("#summaryContent").hide();
-      
       $.ajax({
         url: "/summarize/" + currentPaperId,
         type: "GET",
@@ -254,7 +246,6 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     
     $("#shareSummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
-      // Format the tweet with newlines for better spacing
       var tweetText = encodeURIComponent(currentPaperTitle + "\n\n" + summaryText + "\n\n" + currentPaperPdf);
       var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
       window.open(twitterUrl, "_blank");
