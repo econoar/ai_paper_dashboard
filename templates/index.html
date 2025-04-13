@@ -3,13 +3,15 @@
 {% block content %}
   <h1>Highly Relevant AI Research Papers</h1>
 
+  <!-- Search Bar -->
   <div class="mb-3">
-    <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title...">
+    <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title..." aria-label="Search papers">
   </div>
 
+  <!-- Filter Form with Refresh Button -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
-    <select name="tag" id="tag" class="form-control mr-4">
+    <select name="tag" id="tag" class="form-control mr-4" aria-label="Filter by Tag">
       <option value="all" {% if selected_tag == "all" %} selected {% endif %}>All</option>
       <option value="reinforcement learning" {% if selected_tag == "reinforcement learning" %} selected {% endif %}>Reinforcement Learning</option>
       <option value="digital twin" {% if selected_tag == "digital twin" %} selected {% endif %}>Digital Twin</option>
@@ -57,20 +59,23 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
-                        data-id="{{ paper.id }}"
-                        data-title="{{ paper.title }}"
-                        data-tags="{{ paper.tags | join(', ') }}"
-                        data-published="{{ paper.published }}"
-                        data-time="{{ paper.time }}"
-                        data-link="{{ paper.link }}"
-                        data-pdf="{{ paper.pdf_link }}"
+                <!-- More Info -->
+                <button class="btn btn-secondary btn-sm mb-2 more-info-btn" 
+                        data-id="{{ paper.id }}" 
+                        data-title="{{ paper.title }}" 
+                        data-tags="{{ paper.tags | join(', ') }}" 
+                        data-published="{{ paper.published }}" 
+                        data-time="{{ paper.time }}" 
+                        data-link="{{ paper.link }}" 
+                        data-pdf="{{ paper.pdf_link }}" 
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
+                <!-- Summarize -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
+                <!-- Bookmark -->
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
@@ -109,7 +114,7 @@
           }
       });
     });
-
+    
     $("#refreshButton").on("click", function() {
       window.location.reload();
     });
@@ -122,10 +127,11 @@
         <div class="modal-header">
           <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
+          <!-- Customization Options -->
           <div class="form-group">
             <label for="minLength">Minimum Length (tokens):</label>
             <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
@@ -159,7 +165,10 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
         <div class="modal-footer">
           <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
           <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <button id="shareSummaryBtn" class="btn btn-dark">Share Summary</button>
+          <!-- Share Summary buttons -->
+          <button id="shareSummaryBtn" class="btn btn-dark">Share Summary (Twitter)</button>
+          <button id="shareTgBtn" class="btn btn-dark">Share to TG</button>
+          <button id="shareLiBtn" class="btn btn-dark">Share to LinkedIn</button>
           <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
       </div>
@@ -170,7 +179,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     var currentPaperId = null;
     var currentPaperTitle = "";
     var currentPaperPdf = "";
-    
+
     $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
       var paper = allPapers.find(function(p) { return p.id == currentPaperId; });
@@ -182,7 +191,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       $("#summaryContent").hide();
       $("#summaryModal").modal("show");
     });
-    
+
     $("#generateSummaryBtn").on("click", function() {
       var minLength = $("#minLength").val();
       var maxLength = $("#maxLength").val();
@@ -218,7 +227,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
         }
       });
     });
-    
+
     $("#copySummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       navigator.clipboard.writeText(summaryText).then(function() {
@@ -227,12 +236,26 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           showToast("Error copying summary: " + err);
       });
     });
-    
+
     $("#shareSummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       var tweetText = encodeURIComponent(currentPaperTitle + "\n\n" + summaryText + "\n\n" + currentPaperPdf);
       var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
       window.open(twitterUrl, "_blank");
+    });
+
+    $("#shareTgBtn").on("click", function() {
+      var summaryText = $("#summaryText").text();
+      // Telegram share URL: using url and text parameters
+      var tgUrl = "https://t.me/share/url?url=" + encodeURIComponent(currentPaperPdf) + "&text=" + encodeURIComponent(currentPaperTitle + "\n\n" + summaryText);
+      window.open(tgUrl, "_blank");
+    });
+
+    $("#shareLiBtn").on("click", function() {
+      // LinkedIn share button shares only a URL; LinkedIn will pull metadata
+      // Here we share the PDF link
+      var liUrl = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(currentPaperPdf);
+      window.open(liUrl, "_blank");
     });
   </script>
 
@@ -299,7 +322,9 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           }
         });
       }
+      
       updateBookmarks();
+      
       $(document).on("click", ".bookmark-btn", function(){
           var paperId = $(this).data("paper-id").toString();
           var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
