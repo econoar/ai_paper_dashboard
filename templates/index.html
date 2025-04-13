@@ -3,10 +3,12 @@
 {% block content %}
   <h1>Relevant AI Research Papers</h1>
 
+  <!-- Search Bar -->
   <div class="mb-3">
     <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title..." aria-label="Search papers">
   </div>
 
+  <!-- Filter Form -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
     <select name="tag" id="tag" class="form-control mr-4" aria-label="Filter by Tag">
@@ -108,7 +110,7 @@
           }
       });
     });
-    
+
     $("#refreshButton").on("click", function() {
       window.location.reload();
     });
@@ -143,11 +145,7 @@
           <div class="form-group">
             <label for="promptInput">Prompt:</label>
             <textarea id="promptInput" class="form-control" rows="3">
-Write a tweet-length summary for this research paper.
-Format as follows:
-Title: <Paper Title>
-Summary: <Concise explanation highlighting key contributions, novelty, and impact>
-Link: <Paper URL>
+Generate a concise, tweet-style summary for this research paper. Include the paper's title, a brief summary of its key contributions and novelty, and finish with the paper link.
             </textarea>
           </div>
           <hr>
