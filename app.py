@@ -1,6 +1,7 @@
 import feedparser
 import requests
 import io
+import re
 from PyPDF2 import PdfReader
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 from transformers import pipeline
@@ -20,7 +21,7 @@ DESIRED_TOPICS = [
     "digital twin",
     "agent coordination",
     "multi-agent systems",
-    "transformers",
+    "transformers",  # We'll handle transformers via regex too
     "explainable ai",
     "self-supervised learning",
     "federated learning"
@@ -47,6 +48,31 @@ def build_query(selected_tag="all", max_results=100, start=0):
     )
     return query_url
 
+def get_tags(combined_text):
+    """
+    Uses both exact matching and regex to detect keywords.
+    Returns a list of abbreviated tags.
+    """
+    # Basic mapping for most keywords:
+    tag_mapping = {
+        "reinforcement learning": "RL",
+        "digital twin": "DT",
+        "agent coordination": "AC",
+        "multi-agent systems": "MAS",
+        "explainable ai": "XAI",
+        "self-supervised learning": "SSL",
+        "federated learning": "FL"
+    }
+    tags = []
+    # Exact matching for the terms in tag_mapping
+    for key, short in tag_mapping.items():
+        if key in combined_text:
+            tags.append(short)
+    # Use regex for "transformer" variations: match both "transformer" and "transformers"
+    if re.search(r'\btransformer(s)?\b', combined_text):
+        tags.append("TR")
+    return tags
+
 def fetch_papers(selected_tag="all", max_results=100, start=0):
     global papers
     query_url = build_query(selected_tag, max_results, start)
@@ -69,24 +95,9 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
         except Exception:
             published_str = published
 
-        # Combine title and summary and lower-case the text
+        # Concatenate title and summary in lower case for keyword detection.
         combined_text = (entry.title + " " + entry.summary).lower()
-        # Define our mapping from full keywords to shortened tags
-        tag_mapping = {
-            "reinforcement learning": "RL",
-            "digital twin": "DT",
-            "agent coordination": "AC",
-            "multi-agent systems": "MAS",
-            "transformers": "TR",
-            "explainable ai": "XAI",
-            "self-supervised learning": "SSL",
-            "federated learning": "FL"
-        }
-        # Check each keyword and if found in the text, append its shortened tag
-        tags = []
-        for key, short in tag_mapping.items():
-            if key in combined_text:
-                tags.append(short)
+        tags = get_tags(combined_text)
 
         new_papers.append({
             'id': idx,
@@ -94,7 +105,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             'link': entry.link,
             'pdf_link': pdf_link,
             'summary': entry.summary,
-            'tags': tags,  # Now stores a list of shortened tags
+            'tags': tags,  # List of abbreviated tags (empty if no keywords found)
             'published': published_str
         })
     papers = new_papers
@@ -119,17 +130,15 @@ def extract_pdf_text(pdf_url):
 
 def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
     """
-    Uses the summarization pipeline to produce a detailed summary.
-    If a custom_prompt is provided, it will be prepended to the text.
-    Otherwise, uses the default prompt below.
+    Uses the summarization pipeline to produce a concise summary.
+    If a custom_prompt is provided, it is prepended to the paper text.
     """
     if custom_prompt:
         prompt_text = custom_prompt + "\n\n" + text
     else:
         prompt_text = (
-            "Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. "
-            "In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential "
-            "real-world impact. Use accessible, engaging language to help readers quickly grasp the significance and novelty of the research:\n\n" + text
+            "Provide a concise 2-3 sentence summary for social media audiences. "
+            "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
         )
     if model_name != SUMMARIZER_MODEL:
         temp_summarizer = pipeline("summarization", model=model_name)
