@@ -50,10 +50,10 @@ def build_query(selected_tag="all", max_results=100, start=0):
 
 def get_tags(combined_text):
     """
-    Returns a list of full tag names (not abbreviated) for each keyword found in the combined_text.
-    Uses exact substring matching for most keywords and a regex check for "transformers" (to catch singular/plural).
+    Returns a list of full tag names for each keyword found in the combined_text.
+    Uses exact substring matching for most keywords and a regex for 'transformers'
+    to catch singular/plural variations.
     """
-    # List of keywords to check (using full names)
     keywords = [
         "reinforcement learning",
         "digital twin",
@@ -64,11 +64,9 @@ def get_tags(combined_text):
         "federated learning"
     ]
     tags = []
-    # Use exact matching for the above keywords.
     for keyword in keywords:
         if keyword in combined_text:
             tags.append(keyword)
-    # Use regex for "transformers" so that singular/plural forms are both detected.
     if re.search(r'\btransformer(s)?\b', combined_text):
         tags.append("transformers")
     return tags
@@ -88,14 +86,15 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
 
         published = entry.get("published", "No date available")
         try:
+            # Parse the original arXiv date, convert to PST, then format in 24-hour time.
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
             dt = dt.replace(tzinfo=ZoneInfo("UTC"))
             dt_pst = dt.astimezone(ZoneInfo("America/Los_Angeles"))
-            published_str = dt_pst.strftime("%b %d, %Y %I:%M %p PST")
+            # Format as "Apr 10, 2025 23:45"
+            published_str = dt_pst.strftime("%b %d, %Y %H:%M")
         except Exception:
             published_str = published
 
-        # Combine title and summary (both lowercased) for tag detection.
         combined_text = (entry.title + " " + entry.summary).lower()
         tags = get_tags(combined_text)
 
@@ -105,7 +104,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             'link': entry.link,
             'pdf_link': pdf_link,
             'summary': entry.summary,
-            'tags': tags,  # This list now holds full tag names, e.g. "reinforcement learning", "transformers", etc.
+            'tags': tags,
             'published': published_str
         })
     papers = new_papers
@@ -131,7 +130,7 @@ def extract_pdf_text(pdf_url):
 def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
     """
     Uses the summarization pipeline to produce a concise summary.
-    If a custom_prompt is provided, it is prepended to the text.
+    If a custom_prompt is provided, it is prepended to the paper text.
     """
     if custom_prompt:
         prompt_text = custom_prompt + "\n\n" + text
@@ -174,9 +173,10 @@ def index():
     for paper in papers:
         pub = paper.get("published", "No date available")
         try:
-            dt = datetime.strptime(pub, "%b %d, %Y %I:%M %p PST")
+            # Now parse using 24-hour format
+            dt = datetime.strptime(pub, "%b %d, %Y %H:%M")
             day_key = dt.strftime("%b %d, %Y")
-            time_str = dt.strftime("%I:%M %p PST")
+            time_str = dt.strftime("%H:%M")
         except Exception:
             day_key = pub
             time_str = ""
