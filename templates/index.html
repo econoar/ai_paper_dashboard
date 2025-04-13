@@ -3,12 +3,10 @@
 {% block content %}
   <h1>Highly Relevant AI Research Papers</h1>
 
-  <!-- Search Bar -->
   <div class="mb-3">
     <input type="text" id="searchInput" class="form-control" placeholder="Search papers by title..." aria-label="Search papers">
   </div>
 
-  <!-- Filter Form with Refresh Button -->
   <form action="{{ url_for('index') }}" method="get" class="mb-3 form-inline">
     <label for="tag" class="mr-2">Filter by Tag:</label>
     <select name="tag" id="tag" class="form-control mr-4" aria-label="Filter by Tag">
@@ -59,23 +57,20 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- More Info -->
-                <button class="btn btn-secondary btn-sm mb-2 more-info-btn" 
-                        data-id="{{ paper.id }}" 
-                        data-title="{{ paper.title }}" 
-                        data-tags="{{ paper.tags | join(', ') }}" 
-                        data-published="{{ paper.published }}" 
-                        data-time="{{ paper.time }}" 
-                        data-link="{{ paper.link }}" 
-                        data-pdf="{{ paper.pdf_link }}" 
+                <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
+                        data-id="{{ paper.id }}"
+                        data-title="{{ paper.title }}"
+                        data-tags="{{ paper.tags | join(', ') }}"
+                        data-published="{{ paper.published }}"
+                        data-time="{{ paper.time }}"
+                        data-link="{{ paper.link }}"
+                        data-pdf="{{ paper.pdf_link }}"
                         data-summary="{{ paper.summary | replace('\n', ' ') }}">
                   <i class="fas fa-info-circle"></i> More Info
                 </button>
-                <!-- Summarize -->
                 <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
                   <i class="fas fa-lightbulb"></i> Summarize
                 </button>
-                <!-- Bookmark -->
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
@@ -120,74 +115,73 @@
     });
   </script>
 
-<!-- Summarize Modal -->
-<div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
-        <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-      <div class="modal-body">
-        <!-- Customization Options -->
-        <div class="form-group">
-          <label for="minLength">Minimum Length (tokens):</label>
-          <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
+  <!-- Summarize Modal -->
+  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
         </div>
-        <div class="form-group">
-          <label for="maxLength">Maximum Length (tokens):</label>
-          <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
-        </div>
-        <div class="form-group">
-          <label for="modelSelect">Model:</label>
-          <select id="modelSelect" class="form-control">
-            <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
-            <option value="t5-small">T5-Small</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label for="promptInput">Prompt:</label>
-          <textarea id="promptInput" class="form-control" rows="3">
+        <div class="modal-body">
+          <!-- Customization Options -->
+          <div class="form-group">
+            <label for="minLength">Minimum Length (tokens):</label>
+            <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
+          </div>
+          <div class="form-group">
+            <label for="maxLength">Maximum Length (tokens):</label>
+            <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
+          </div>
+          <div class="form-group">
+            <label for="modelSelect">Model:</label>
+            <select id="modelSelect" class="form-control">
+              <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
+              <option value="t5-small">T5-Small</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="promptInput">Prompt:</label>
+            <textarea id="promptInput" class="form-control" rows="3">
 Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential real-world impact. Use clear, engaging language:
-          </textarea>
+            </textarea>
+          </div>
+          <hr>
+          <div id="summaryLoading" class="text-center" style="display:none;">
+            <span class="spinner-border"></span>
+            <p>Generating summary...</p>
+          </div>
+          <div id="summaryContent" style="display:none;">
+            <p id="summaryText"></p>
+          </div>
         </div>
-        <hr>
-        <div id="summaryLoading" class="text-center" style="display:none;">
-          <span class="spinner-border"></span>
-          <p>Generating summary...</p>
+        <div class="modal-footer">
+          <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
+          <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
+          <!-- Social sharing buttons -->
+          <button id="shareTwitterBtn" class="btn btn-info" title="Share on Twitter">
+            <i class="fab fa-twitter"></i>
+          </button>
+          <button id="shareTgBtn" class="btn btn-info" title="Share on Telegram">
+            <i class="fab fa-telegram-plane"></i>
+          </button>
+          <button id="shareLinkedInBtn" class="btn btn-info" title="Share on LinkedIn">
+            <i class="fab fa-linkedin"></i>
+          </button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Close">Close</button>
         </div>
-        <div id="summaryContent" style="display:none;">
-          <p id="summaryText"></p>
-        </div>
-      </div>
-      <div class="modal-footer">
-        <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
-        <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-        <!-- Social sharing buttons with icons only -->
-        <button id="shareTwitterBtn" class="btn btn-info" title="Share on Twitter">
-          <i class="fab fa-twitter"></i>
-        </button>
-        <button id="shareTgBtn" class="btn btn-info" title="Share on Telegram">
-          <i class="fab fa-telegram-plane"></i>
-        </button>
-        <button id="shareLinkedInBtn" class="btn btn-info" title="Share on LinkedIn">
-          <i class="fab fa-linkedin"></i>
-        </button>
-        <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Close">Close</button>
       </div>
     </div>
   </div>
-</div>
 
-<script>
-  var currentPaperId = null;
-  var currentPaperTitle = "";
-  var currentPaperPdf = "";
+  <script>
+    var currentPaperId = null;
+    var currentPaperTitle = "";
+    var currentPaperPdf = "";
 
-  // When "Summarize" is clicked, open the modal and store paper data.
-  $(document).on("click", ".summarize-btn", function() {
+    $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
       var paper = allPapers.find(function(p) { return p.id == currentPaperId; });
       if (paper) {
@@ -197,9 +191,9 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       $("#summaryLoading").hide();
       $("#summaryContent").hide();
       $("#summaryModal").modal("show");
-  });
+    });
 
-  $("#generateSummaryBtn").on("click", function() {
+    $("#generateSummaryBtn").on("click", function() {
       var minLength = $("#minLength").val();
       var maxLength = $("#maxLength").val();
       var model = $("#modelSelect").val();
@@ -233,37 +227,35 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
               $("#summaryContent").show();
           }
       });
-  });
+    });
 
-  $("#copySummaryBtn").on("click", function() {
+    $("#copySummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       navigator.clipboard.writeText(summaryText).then(function() {
           showToast("Summary copied to clipboard!");
       }, function(err) {
           showToast("Error copying summary: " + err);
       });
-  });
+    });
 
-  $("#shareTwitterBtn").on("click", function() {
+    $("#shareTwitterBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       var tweetText = encodeURIComponent(currentPaperTitle + "\n\n" + summaryText + "\n\n" + currentPaperPdf);
       var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
       window.open(twitterUrl, "_blank");
-  });
+    });
 
-  $("#shareTgBtn").on("click", function() {
+    $("#shareTgBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
-      // Telegram share URL supports both a URL and text message
       var tgUrl = "https://t.me/share/url?url=" + encodeURIComponent(currentPaperPdf) + "&text=" + encodeURIComponent(currentPaperTitle + "\n\n" + summaryText);
       window.open(tgUrl, "_blank");
-  });
+    });
 
-  $("#shareLinkedInBtn").on("click", function() {
-      // LinkedIn share URL: LinkedIn will extract metadata from the URL we provide (usually the paper's PDF link)
+    $("#shareLinkedInBtn").on("click", function() {
       var liUrl = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(currentPaperPdf);
       window.open(liUrl, "_blank");
-  });
-</script>
+    });
+  </script>
 
   <!-- More Info Modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
@@ -271,7 +263,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="detailsModalLabel">Paper Details</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close">
              <span aria-hidden="true">&times;</span>
           </button>
         </div>
@@ -287,7 +279,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           <p id="modalSummary"></p>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Close">Close</button>
         </div>
       </div>
     </div>
@@ -328,9 +320,7 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           }
         });
       }
-      
       updateBookmarks();
-      
       $(document).on("click", ".bookmark-btn", function(){
           var paperId = $(this).data("paper-id").toString();
           var bookmarks = JSON.parse(localStorage.getItem('bookmarksData')) || [];
@@ -345,4 +335,5 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       });
     });
   </script>
+  
 {% endblock %}

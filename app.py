@@ -21,7 +21,7 @@ DESIRED_TOPICS = [
     "digital twin",
     "agent coordination",
     "multi-agent systems",
-    "transformers",  # Regex will handle variations
+    "transformers",  # will use regex for variations
     "explainable ai",
     "self-supervised learning",
     "federated learning"
@@ -29,8 +29,6 @@ DESIRED_TOPICS = [
 
 # Default summarization model
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
-
-# Initialize the summarization pipeline with the default model
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
 def build_query(selected_tag="all", max_results=100, start=0):
@@ -50,7 +48,8 @@ def build_query(selected_tag="all", max_results=100, start=0):
 
 def get_tags(combined_text):
     """
-    Returns a list of full tag names using exact matching and a regex for transformer variations.
+    Returns a list of full tag names using exact matching for most keywords and a regex for 'transformers'
+    to catch both singular and plural forms.
     """
     keywords = [
         "reinforcement learning",
@@ -87,7 +86,6 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             dt = datetime.strptime(published, "%Y-%m-%dT%H:%M:%SZ")
             dt = dt.replace(tzinfo=ZoneInfo("UTC"))
             dt_pst = dt.astimezone(ZoneInfo("America/Los_Angeles"))
-            # Format in 24-hour time
             published_str = dt_pst.strftime("%b %d, %Y %H:%M")
         except Exception:
             published_str = published
