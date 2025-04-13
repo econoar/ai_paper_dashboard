@@ -59,7 +59,7 @@
             </td>
             <td>
               <div class="d-flex flex-column">
-                <!-- More Info button at the top -->
+                <!-- More Info button (moved to the top) -->
                 <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
                         data-id="{{ paper.id }}"
                         data-title="{{ paper.title }}"
@@ -79,10 +79,7 @@
                 <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
                   <i class="far fa-star"></i> Bookmark
                 </button>
-                <!-- Share button -->
-                <button class="btn btn-dark btn-sm mb-2 share-btn" data-title="{{ paper.title }}" data-summary="{{ paper.summary | replace('\n', ' ') }}">
-                  <i class="fas fa-share-alt"></i> Share
-                </button>
+                <!-- Optionally add a share button here on the main page if desired -->
               </div>
             </td>
           </tr>
@@ -113,30 +110,21 @@
     $(function() {
       var titles = [];
       $(".paper-title").each(function() {
-          titles.push($(this).text().trim());
+        titles.push($(this).text().trim());
       });
       $("#searchInput").autocomplete({
-          source: titles,
-          select: function(event, ui) {
-              $(".paper-row").each(function() {
-                  $(this).toggle($(this).text().toLowerCase().indexOf(ui.item.value.toLowerCase()) > -1);
-              });
-          }
+        source: titles,
+        select: function(event, ui) {
+          $(".paper-row").each(function() {
+            $(this).toggle($(this).text().toLowerCase().indexOf(ui.item.value.toLowerCase()) > -1);
+          });
+        }
       });
     });
     
     // Refresh button reloads the page.
     $("#refreshButton").on("click", function() {
       window.location.reload();
-    });
-    
-    // Share button for Twitter sharing.
-    $(document).on("click", ".share-btn", function() {
-      var title = $(this).data("title");
-      var summary = $(this).data("summary");
-      var tweetText = encodeURIComponent(title + " — " + summary);
-      var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
-      window.open(twitterUrl, "_blank");
     });
   </script>
   
@@ -147,7 +135,7 @@
         <div class="modal-header">
           <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
@@ -183,20 +171,33 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
           </div>
         </div>
         <div class="modal-footer">
+          <!-- Remove Re-summarize; add Share Summary -->
           <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
           <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <button id="resummarizeBtn" class="btn btn-secondary">Re-summarize</button>
-          <button type="button" class="btn btn-dark" data-dismiss="modal">Close</button>
+          <button id="shareSummaryBtn" class="btn btn-dark">Share Summary</button>
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
   
-  <!-- Summarize AJAX Handler -->
+  <!-- Summarize Modal AJAX Handler -->
   <script>
     var currentPaperId = null;
+    var currentPaperTitle = "";
+    var currentPaperPdf = "";
+    
+    // When the Summarize button is clicked, store the current paper data
     $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
+      // Lookup current paper data from allPapers (loaded in base.html)
+      var paper = allPapers.find(function(p) {
+        return p.id == currentPaperId;
+      });
+      if (paper) {
+        currentPaperTitle = paper.title;
+        currentPaperPdf = paper.pdf_link;
+      }
       $("#summaryLoading").hide();
       $("#summaryContent").hide();
       $("#summaryModal").modal("show");
@@ -248,19 +249,23 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       });
     });
     
-    $("#resummarizeBtn").on("click", function() {
-      $("#generateSummaryBtn").click();
+    // Remove the Re-summarize button (its functionality replaced by Share Summary)
+    $("#shareSummaryBtn").on("click", function() {
+      var summaryText = $("#summaryText").text();
+      var tweetText = encodeURIComponent(currentPaperTitle + " — " + summaryText + " " + currentPaperPdf);
+      var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
+      window.open(twitterUrl, "_blank");
     });
   </script>
   
-  <!-- More Info Modal -->
+  <!-- More Info Modal (unchanged) -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="detailsModalLabel">Paper Details</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-             <span aria-hidden="true">&times;</span>
+            <span aria-hidden="true">&times;</span>
           </button>
         </div>
         <div class="modal-body">
@@ -281,7 +286,30 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
     </div>
   </div>
   
-  <!-- Bookmark Functionality -->
+  <!-- More Info Modal Trigger Script -->
+  <script>
+    $(document).on("click", ".more-info-btn", function() {
+      var title = $(this).data("title");
+      var tags = $(this).data("tags");
+      var published = $(this).data("published");
+      var time = $(this).data("time");
+      var link = $(this).data("link");
+      var pdf = $(this).data("pdf");
+      var summary = $(this).data("summary");
+      
+      $("#modalTitle").text(title);
+      $("#modalTags").text(tags || "N/A");
+      $("#modalPublished").text(published);
+      $("#modalTime").text(time);
+      $("#modalLink").attr("href", link).text(link);
+      $("#modalPdf").attr("href", pdf).text(pdf);
+      $("#modalSummary").text(summary);
+      
+      $("#detailsModal").modal("show");
+    });
+  </script>
+  
+  <!-- Bookmark Functionality (unchanged) -->
   <script>
     $(document).ready(function(){
       function updateBookmarks() {

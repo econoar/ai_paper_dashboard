@@ -68,7 +68,7 @@
       }
     });
     
-    // More Info Modal Trigger on bookmarks page (same as main page)
+    // More Info Modal Trigger on bookmarks page (reuse same modal as index)
     $(document).on("click", ".more-info-btn", function() {
       var title = $(this).data("title");
       var tags = $(this).data("tags");
@@ -93,15 +93,13 @@
     $(document).on("click", ".share-btn", function() {
       var title = $(this).data("title");
       var summary = $(this).data("summary");
-      var tweetText = encodeURIComponent(title + " — " + summary);
+      var tweetText = encodeURIComponent(title + " — " + summary + " " + (allPapers.find(p => p.id == $(this).data("paper-id")) ? allPapers.find(p => p.id == $(this).data("paper-id")).pdf_link : ""));
       var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
       window.open(twitterUrl, "_blank");
     });
-    
-    // Bookmark functionality on bookmarks page is already initialized in base.js (if separate) or in index.html script; if needed, reinitialize here.
   </script>
   
-  <!-- More Info Modal for bookmarks (reuse same modal as index) -->
+  <!-- More Info Modal for bookmarks (reuse same modal) -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
       <div class="modal-content">
