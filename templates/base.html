@@ -25,7 +25,8 @@
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
+    <!-- Updated brand name -->
+    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers</a>
     <div class="navbar-nav">
       <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
       <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
@@ -36,10 +37,12 @@
     {% block content %}{% endblock %}
   </div>
 
+  <!-- Expose papers for client-side scripts -->
   <script>
     var allPapers = {{ papers|default([])|tojson }};
   </script>
 
+  <!-- Toast Notification -->
   <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;">
     <div id="toastNotification" class="toast" data-delay="3000">
       <div class="toast-header">
