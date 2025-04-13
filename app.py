@@ -206,5 +206,9 @@ def open_pdf(paper_id):
 def bookmarks():
     return render_template('bookmarks.html', papers=papers)
 
+@app.route('/info')
+def info():
+    return render_template('info.html')
+
 if __name__ == '__main__':
     app.run(host="0.0.0.0", debug=True)

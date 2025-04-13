@@ -3,17 +3,6 @@
 {% block content %}
   <!-- Updated Header and Subheading -->
   <h1>AI Research Papers</h1>
-  <h4>Papers from arXiv in the following categories:
-    <!-- List categories as links that pass the respective tag parameter -->
-    <a href="{{ url_for('index', tag='reinforcement learning') }}">Reinforcement Learning</a> |
-    <a href="{{ url_for('index', tag='digital twin') }}">Digital Twin</a> |
-    <a href="{{ url_for('index', tag='agent coordination') }}">Agent Coordination</a> |
-    <a href="{{ url_for('index', tag='multi-agent systems') }}">Multi-agent Systems</a> |
-    <a href="{{ url_for('index', tag='transformers') }}">Transformers</a> |
-    <a href="{{ url_for('index', tag='explainable ai') }}">Explainable AI</a> |
-    <a href="{{ url_for('index', tag='self-supervised learning') }}">Self-supervised Learning</a> |
-    <a href="{{ url_for('index', tag='federated learning') }}">Federated Learning</a>
-  </h4>
 
   <!-- Search Bar with Autocomplete -->
   <div class="mb-3">
