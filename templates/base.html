@@ -15,7 +15,6 @@
     .d-flex.flex-column > button {
       margin-bottom: 0.5rem;
     }
-    /* Adjust fonts and button sizes on smaller devices */
     @media (max-width: 576px) {
       .table {
         font-size: 0.85rem;
@@ -25,7 +24,6 @@
         padding: 0.5rem 0.75rem;
       }
     }
-    /* Footer styling */
     footer {
       background-color: #f8f9fa;
       padding: 1rem;
@@ -52,17 +50,14 @@
     {% block content %}{% endblock %}
   </div>
   
-  <!-- Footer with GitHub link -->
   <footer>
     <p>View this project on <a href="https://github.com/econoar/ai_paper_dashboard" target="_blank">GitHub</a></p>
   </footer>
 
-  <!-- Expose papers for client-side scripts -->
   <script>
     var allPapers = {{ papers|default([])|tojson }};
   </script>
 
-  <!-- Toast Notification -->
   <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;">
     <div id="toastNotification" class="toast" data-delay="3000">
       <div class="toast-header">
@@ -79,8 +74,8 @@
       $("#toastNotification").toast("show");
     }
   </script>
-
-  <!-- Ensure modals close properly on mobile: bind click and touchend events on close buttons -->
+  
+  <!-- Bind touch events for mobile close of modals -->
   <script>
     $(document).on('click touchend', '.modal .close', function() {
       $(this).closest('.modal').modal('hide');
