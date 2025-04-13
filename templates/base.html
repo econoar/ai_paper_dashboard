@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <title>AI Papers Dashboard</title>
+  <!-- Mobile friendly: viewport meta tag -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cosmo/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
@@ -13,12 +15,14 @@
     .d-flex.flex-column > button {
       margin-bottom: 0.5rem;
     }
+    /* Adjust fonts and button sizes on smaller devices */
     @media (max-width: 576px) {
       .table {
         font-size: 0.85rem;
       }
       .btn {
         font-size: 0.85rem;
+        padding: 0.5rem 0.75rem;
       }
     }
     /* Footer styling */
@@ -37,7 +41,8 @@
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
+    <!-- Updated brand if desired -->
+    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers</a>
     <div class="navbar-nav">
       <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
       <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
@@ -47,16 +52,18 @@
   <div class="container mt-4">
     {% block content %}{% endblock %}
   </div>
-
+  
   <!-- Footer with GitHub link -->
   <footer>
     <p>View this project on <a href="https://github.com/econoar/ai_paper_dashboard" target="_blank">GitHub</a></p>
   </footer>
 
+  <!-- Expose papers for client-side scripts -->
   <script>
     var allPapers = {{ papers|default([])|tojson }};
   </script>
 
+  <!-- Toast Notification -->
   <div aria-live="polite" aria-atomic="true" style="position: fixed; top: 1rem; right: 1rem; z-index: 1050;">
     <div id="toastNotification" class="toast" data-delay="3000">
       <div class="toast-header">
