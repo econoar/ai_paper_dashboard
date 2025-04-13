@@ -69,8 +69,24 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
         except Exception:
             published_str = published
 
+        # Combine title and summary and lower-case the text
         combined_text = (entry.title + " " + entry.summary).lower()
-        tags = [topic for topic in DESIRED_TOPICS if topic in combined_text]
+        # Define our mapping from full keywords to shortened tags
+        tag_mapping = {
+            "reinforcement learning": "RL",
+            "digital twin": "DT",
+            "agent coordination": "AC",
+            "multi-agent systems": "MAS",
+            "transformers": "TR",
+            "explainable ai": "XAI",
+            "self-supervised learning": "SSL",
+            "federated learning": "FL"
+        }
+        # Check each keyword and if found in the text, append its shortened tag
+        tags = []
+        for key, short in tag_mapping.items():
+            if key in combined_text:
+                tags.append(short)
 
         new_papers.append({
             'id': idx,
@@ -78,7 +94,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             'link': entry.link,
             'pdf_link': pdf_link,
             'summary': entry.summary,
-            'tags': tags,
+            'tags': tags,  # Now stores a list of shortened tags
             'published': published_str
         })
     papers = new_papers
