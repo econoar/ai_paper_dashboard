@@ -21,7 +21,7 @@ DESIRED_TOPICS = [
     "digital twin",
     "agent coordination",
     "multi-agent systems",
-    "transformers",  # We'll handle transformers via regex too
+    "transformers",  # We'll handle transformers with regex
     "explainable ai",
     "self-supervised learning",
     "federated learning"
@@ -50,27 +50,27 @@ def build_query(selected_tag="all", max_results=100, start=0):
 
 def get_tags(combined_text):
     """
-    Uses both exact matching and regex to detect keywords.
-    Returns a list of abbreviated tags.
+    Returns a list of full tag names (not abbreviated) for each keyword found in the combined_text.
+    Uses exact substring matching for most keywords and a regex check for "transformers" (to catch singular/plural).
     """
-    # Basic mapping for most keywords:
-    tag_mapping = {
-        "reinforcement learning": "RL",
-        "digital twin": "DT",
-        "agent coordination": "AC",
-        "multi-agent systems": "MAS",
-        "explainable ai": "XAI",
-        "self-supervised learning": "SSL",
-        "federated learning": "FL"
-    }
+    # List of keywords to check (using full names)
+    keywords = [
+        "reinforcement learning",
+        "digital twin",
+        "agent coordination",
+        "multi-agent systems",
+        "explainable ai",
+        "self-supervised learning",
+        "federated learning"
+    ]
     tags = []
-    # Exact matching for the terms in tag_mapping
-    for key, short in tag_mapping.items():
-        if key in combined_text:
-            tags.append(short)
-    # Use regex for "transformer" variations: match both "transformer" and "transformers"
+    # Use exact matching for the above keywords.
+    for keyword in keywords:
+        if keyword in combined_text:
+            tags.append(keyword)
+    # Use regex for "transformers" so that singular/plural forms are both detected.
     if re.search(r'\btransformer(s)?\b', combined_text):
-        tags.append("TR")
+        tags.append("transformers")
     return tags
 
 def fetch_papers(selected_tag="all", max_results=100, start=0):
@@ -95,7 +95,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
         except Exception:
             published_str = published
 
-        # Concatenate title and summary in lower case for keyword detection.
+        # Combine title and summary (both lowercased) for tag detection.
         combined_text = (entry.title + " " + entry.summary).lower()
         tags = get_tags(combined_text)
 
@@ -105,7 +105,7 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
             'link': entry.link,
             'pdf_link': pdf_link,
             'summary': entry.summary,
-            'tags': tags,  # List of abbreviated tags (empty if no keywords found)
+            'tags': tags,  # This list now holds full tag names, e.g. "reinforcement learning", "transformers", etc.
             'published': published_str
         })
     papers = new_papers
@@ -131,7 +131,7 @@ def extract_pdf_text(pdf_url):
 def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
     """
     Uses the summarization pipeline to produce a concise summary.
-    If a custom_prompt is provided, it is prepended to the paper text.
+    If a custom_prompt is provided, it is prepended to the text.
     """
     if custom_prompt:
         prompt_text = custom_prompt + "\n\n" + text
