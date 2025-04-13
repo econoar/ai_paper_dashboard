@@ -28,65 +28,63 @@
 
   {% for day, day_papers in grouped_papers.items() %}
     <h3>{{ day }}</h3>
-
-    <!-- Desktop (sm and up): Table Layout -->
-    <div class="d-none d-sm-block">
-      <div class="table-responsive">
-        <table class="table table-striped table-bordered" style="table-layout: fixed; width: 100%;">
-          <thead>
-            <tr>
-              <th>Title</th>
-              <th>Abstract Excerpt</th>
-              <th style="width: 120px;">Tags</th>
-              <th style="width: 130px;">Actions</th>
+    
+    <!-- Desktop Layout: Table for small and larger screens -->
+    <div class="table-responsive d-none d-sm-block">
+      <table class="table table-striped table-bordered" style="table-layout: fixed; width: 100%;">
+        <thead>
+          <tr>
+            <th>Title</th>
+            <th>Abstract Excerpt</th>
+            <th style="width: 120px;">Tags</th>
+            <th style="width: 130px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for paper in day_papers %}
+            <tr class="paper-row">
+              <td class="paper-title">{{ paper.title }}</td>
+              <td>
+                {% if paper.summary %}
+                  {{ paper.summary[:200] }}{% if paper.summary|length > 200 %}...{% endif %}
+                {% else %}
+                  No abstract available.
+                {% endif %}
+              </td>
+              <td>
+                {% if paper.tags %}
+                  {{ paper.tags | join(', ') }}
+                {% else %}
+                  N/A
+                {% endif %}
+              </td>
+              <td>
+                <div class="d-flex flex-column">
+                  <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
+                          data-id="{{ paper.id }}"
+                          data-title="{{ paper.title }}"
+                          data-tags="{{ paper.tags | join(', ') }}"
+                          data-published="{{ paper.published }}"
+                          data-link="{{ paper.link }}"
+                          data-pdf="{{ paper.pdf_link }}"
+                          data-summary="{{ paper.summary | replace('\n', ' ') }}">
+                    <i class="fas fa-info-circle"></i> More Info
+                  </button>
+                  <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
+                    <i class="fas fa-lightbulb"></i> Summarize
+                  </button>
+                  <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
+                    <i class="far fa-star"></i> Bookmark
+                  </button>
+                </div>
+              </td>
             </tr>
-          </thead>
-          <tbody>
-            {% for paper in day_papers %}
-              <tr class="paper-row">
-                <td class="paper-title">{{ paper.title }}</td>
-                <td>
-                  {% if paper.summary %}
-                    {{ paper.summary[:200] }}{% if paper.summary|length > 200 %}...{% endif %}
-                  {% else %}
-                    No abstract available.
-                  {% endif %}
-                </td>
-                <td>
-                  {% if paper.tags %}
-                    {{ paper.tags | join(', ') }}
-                  {% else %}
-                    N/A
-                  {% endif %}
-                </td>
-                <td>
-                  <div class="d-flex flex-column">
-                    <button class="btn btn-secondary btn-sm mb-2 more-info-btn"
-                            data-id="{{ paper.id }}"
-                            data-title="{{ paper.title }}"
-                            data-tags="{{ paper.tags | join(', ') }}"
-                            data-published="{{ paper.published }}"
-                            data-link="{{ paper.link }}"
-                            data-pdf="{{ paper.pdf_link }}"
-                            data-summary="{{ paper.summary | replace('\n', ' ') }}">
-                      <i class="fas fa-info-circle"></i> More Info
-                    </button>
-                    <button class="btn btn-success btn-sm mb-2 summarize-btn" data-paper-id="{{ paper.id }}">
-                      <i class="fas fa-lightbulb"></i> Summarize
-                    </button>
-                    <button class="btn btn-warning btn-sm mb-2 bookmark-btn" data-paper-id="{{ paper.id }}">
-                      <i class="far fa-star"></i> Bookmark
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <!-- Mobile (xs): Card Layout -->
+    <!-- Mobile Layout: Card layout for extra-small screens -->
     <div class="d-block d-sm-none">
       {% for paper in day_papers %}
         <div class="card mb-3">
@@ -99,7 +97,7 @@
                 No abstract available.
               {% endif %}
             </p>
-            <p><strong>Tags:</strong>
+            <p><strong>Tags:</strong> 
               {% if paper.tags %}
                 {{ paper.tags | join(', ') }}
               {% else %}
@@ -128,7 +126,6 @@
         </div>
       {% endfor %}
     </div>
-    
   {% endfor %}
 
   <!-- Pagination -->
@@ -159,13 +156,13 @@
           }
       });
     });
-
+    
     $("#refreshButton").on("click", function() {
       window.location.reload();
     });
   </script>
 
-  <!-- Summarize Modal (remains unchanged) -->
+  <!-- Summarize Modal -->
   <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
@@ -176,6 +173,7 @@
           </button>
         </div>
         <div class="modal-body">
+          <!-- Customization Options -->
           <div class="form-group">
             <label for="minLength">Minimum Length (tokens):</label>
             <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
@@ -194,7 +192,11 @@
           <div class="form-group">
             <label for="promptInput">Prompt:</label>
             <textarea id="promptInput" class="form-control" rows="3">
-Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential real-world impact. Use clear, engaging language:
+Write a tweet-length summary for this research paper.
+Format as follows:
+Title: <Paper Title>
+Summary: <Concise explanation highlighting key contributions, novelty, and impact>
+Link: <Paper URL>
             </textarea>
           </div>
           <hr>
@@ -340,14 +342,14 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       var link = $(this).data("link");
       var pdf = $(this).data("pdf");
       var summary = $(this).data("summary");
-
+      
       $("#modalTitle").text(title);
       $("#modalTags").text(tags || "N/A");
       $("#modalPublished").text(published);
       $("#modalLink").attr("href", link).text(link);
       $("#modalPdf").attr("href", pdf).text(pdf);
       $("#modalSummary").text(summary);
-
+      
       $("#detailsModal").modal("show");
     });
   </script>

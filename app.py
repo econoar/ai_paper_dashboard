@@ -123,12 +123,27 @@ def extract_pdf_text(pdf_url):
         return None
 
 def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
+    """
+    Generates a tweet-formatted summary for social sharing.
+    If no custom prompt is provided, uses a default tweet-style format:
+    
+    Format:
+    Title: [Paper Title]
+    Summary: [Concise summary highlighting key contributions and novelty]
+    Link: [PDF or arXiv URL]
+    
+    The aim is to keep it short, engaging, and within tweet character limits.
+    """
     if custom_prompt:
         prompt_text = custom_prompt + "\n\n" + text
     else:
         prompt_text = (
-            "Provide a concise 2-3 sentence summary for social media audiences. "
-            "Highlight the paper's key contributions, novelty, and potential impact:\n\n" + text
+            "Write a tweet-length summary of this research paper.\n"
+            "Format it as follows:\n"
+            "Title: <Paper Title>\n"
+            "Summary: <Concise summary of key contributions, novelty, and impact>\n"
+            "Link: <Paper PDF or arXiv URL>\n\n"
+            "Paper Text:\n" + text
         )
     if model_name != SUMMARIZER_MODEL:
         temp_summarizer = pipeline("summarization", model=model_name)
@@ -166,11 +181,8 @@ def index():
         try:
             dt = datetime.strptime(pub, "%b %d, %Y %H:%M")
             day_key = dt.strftime("%b %d, %Y")
-            time_str = dt.strftime("%H:%M")
         except Exception:
             day_key = pub
-            time_str = ""
-        paper['time'] = time_str
         grouped_papers[day_key].append(paper)
     
     return render_template('index.html', grouped_papers=grouped_papers,
