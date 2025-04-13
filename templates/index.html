@@ -120,79 +120,86 @@
     });
   </script>
 
-  <!-- Summarize Modal -->
-  <div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+<!-- Summarize Modal -->
+<div class="modal fade" id="summaryModal" tabindex="-1" role="dialog" aria-labelledby="summaryModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="summaryModalLabel">Generate Summary</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close" title="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Customization Options -->
+        <div class="form-group">
+          <label for="minLength">Minimum Length (tokens):</label>
+          <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
         </div>
-        <div class="modal-body">
-          <!-- Customization Options -->
-          <div class="form-group">
-            <label for="minLength">Minimum Length (tokens):</label>
-            <input type="number" id="minLength" class="form-control" value="80" min="20" max="500">
-          </div>
-          <div class="form-group">
-            <label for="maxLength">Maximum Length (tokens):</label>
-            <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
-          </div>
-          <div class="form-group">
-            <label for="modelSelect">Model:</label>
-            <select id="modelSelect" class="form-control">
-              <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
-              <option value="t5-small">T5-Small</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label for="promptInput">Prompt:</label>
-            <textarea id="promptInput" class="form-control" rows="3">
+        <div class="form-group">
+          <label for="maxLength">Maximum Length (tokens):</label>
+          <input type="number" id="maxLength" class="form-control" value="300" min="50" max="1000">
+        </div>
+        <div class="form-group">
+          <label for="modelSelect">Model:</label>
+          <select id="modelSelect" class="form-control">
+            <option value="sshleifer/distilbart-cnn-12-6" selected>DistilBART (Default)</option>
+            <option value="t5-small">T5-Small</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="promptInput">Prompt:</label>
+          <textarea id="promptInput" class="form-control" rows="3">
 Generate a detailed 1–2 paragraph summary of the following research paper for social media audiences. In your summary, clearly explain the paper’s primary contributions, innovative methods, and potential real-world impact. Use clear, engaging language:
-            </textarea>
-          </div>
-          <hr>
-          <div id="summaryLoading" class="text-center" style="display:none;">
-            <span class="spinner-border"></span>
-            <p>Generating summary...</p>
-          </div>
-          <div id="summaryContent" style="display:none;">
-            <p id="summaryText"></p>
-          </div>
+          </textarea>
         </div>
-        <div class="modal-footer">
-          <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
-          <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
-          <!-- Share Summary buttons -->
-          <button id="shareSummaryBtn" class="btn btn-dark">Share Summary (Twitter)</button>
-          <button id="shareTgBtn" class="btn btn-dark">Share to TG</button>
-          <button id="shareLiBtn" class="btn btn-dark">Share to LinkedIn</button>
-          <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <hr>
+        <div id="summaryLoading" class="text-center" style="display:none;">
+          <span class="spinner-border"></span>
+          <p>Generating summary...</p>
         </div>
+        <div id="summaryContent" style="display:none;">
+          <p id="summaryText"></p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button id="generateSummaryBtn" class="btn btn-success">Generate</button>
+        <button id="copySummaryBtn" class="btn btn-primary">Copy</button>
+        <!-- Social sharing buttons with icons only -->
+        <button id="shareTwitterBtn" class="btn btn-info" title="Share on Twitter">
+          <i class="fab fa-twitter"></i>
+        </button>
+        <button id="shareTgBtn" class="btn btn-info" title="Share on Telegram">
+          <i class="fab fa-telegram-plane"></i>
+        </button>
+        <button id="shareLinkedInBtn" class="btn btn-info" title="Share on LinkedIn">
+          <i class="fab fa-linkedin"></i>
+        </button>
+        <button type="button" class="btn btn-secondary" data-dismiss="modal" title="Close">Close</button>
       </div>
     </div>
   </div>
+</div>
 
-  <script>
-    var currentPaperId = null;
-    var currentPaperTitle = "";
-    var currentPaperPdf = "";
+<script>
+  var currentPaperId = null;
+  var currentPaperTitle = "";
+  var currentPaperPdf = "";
 
-    $(document).on("click", ".summarize-btn", function() {
+  // When "Summarize" is clicked, open the modal and store paper data.
+  $(document).on("click", ".summarize-btn", function() {
       currentPaperId = $(this).data("paper-id");
       var paper = allPapers.find(function(p) { return p.id == currentPaperId; });
       if (paper) {
-        currentPaperTitle = paper.title;
-        currentPaperPdf = paper.pdf_link;
+          currentPaperTitle = paper.title;
+          currentPaperPdf = paper.pdf_link;
       }
       $("#summaryLoading").hide();
       $("#summaryContent").hide();
       $("#summaryModal").modal("show");
-    });
+  });
 
-    $("#generateSummaryBtn").on("click", function() {
+  $("#generateSummaryBtn").on("click", function() {
       var minLength = $("#minLength").val();
       var maxLength = $("#maxLength").val();
       var model = $("#modelSelect").val();
@@ -200,64 +207,63 @@ Generate a detailed 1–2 paragraph summary of the following research paper for 
       $("#summaryLoading").show();
       $("#summaryContent").hide();
       $.ajax({
-        url: "/summarize/" + currentPaperId,
-        type: "GET",
-        data: {
-          min_length: minLength,
-          max_length: maxLength,
-          model: model,
-          prompt: customPrompt
-        },
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-        success: function(data) {
-          if(data.summary) {
-            $("#summaryText").text(data.summary);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
-          } else if(data.error) {
-            $("#summaryText").text("Error: " + data.error);
-            $("#summaryLoading").hide();
-            $("#summaryContent").show();
+          url: "/summarize/" + currentPaperId,
+          type: "GET",
+          data: {
+              min_length: minLength,
+              max_length: maxLength,
+              model: model,
+              prompt: customPrompt
+          },
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+          success: function(data) {
+              if(data.summary) {
+                  $("#summaryText").text(data.summary);
+                  $("#summaryLoading").hide();
+                  $("#summaryContent").show();
+              } else if(data.error) {
+                  $("#summaryText").text("Error: " + data.error);
+                  $("#summaryLoading").hide();
+                  $("#summaryContent").show();
+              }
+          },
+          error: function() {
+              $("#summaryText").text("Error generating summary.");
+              $("#summaryLoading").hide();
+              $("#summaryContent").show();
           }
-        },
-        error: function() {
-          $("#summaryText").text("Error generating summary.");
-          $("#summaryLoading").hide();
-          $("#summaryContent").show();
-        }
       });
-    });
+  });
 
-    $("#copySummaryBtn").on("click", function() {
+  $("#copySummaryBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       navigator.clipboard.writeText(summaryText).then(function() {
           showToast("Summary copied to clipboard!");
       }, function(err) {
           showToast("Error copying summary: " + err);
       });
-    });
+  });
 
-    $("#shareSummaryBtn").on("click", function() {
+  $("#shareTwitterBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
       var tweetText = encodeURIComponent(currentPaperTitle + "\n\n" + summaryText + "\n\n" + currentPaperPdf);
       var twitterUrl = "https://twitter.com/intent/tweet?text=" + tweetText;
       window.open(twitterUrl, "_blank");
-    });
+  });
 
-    $("#shareTgBtn").on("click", function() {
+  $("#shareTgBtn").on("click", function() {
       var summaryText = $("#summaryText").text();
-      // Telegram share URL: using url and text parameters
+      // Telegram share URL supports both a URL and text message
       var tgUrl = "https://t.me/share/url?url=" + encodeURIComponent(currentPaperPdf) + "&text=" + encodeURIComponent(currentPaperTitle + "\n\n" + summaryText);
       window.open(tgUrl, "_blank");
-    });
+  });
 
-    $("#shareLiBtn").on("click", function() {
-      // LinkedIn share button shares only a URL; LinkedIn will pull metadata
-      // Here we share the PDF link
+  $("#shareLinkedInBtn").on("click", function() {
+      // LinkedIn share URL: LinkedIn will extract metadata from the URL we provide (usually the paper's PDF link)
       var liUrl = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(currentPaperPdf);
       window.open(liUrl, "_blank");
-    });
-  </script>
+  });
+</script>
 
   <!-- More Info Modal -->
   <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel" aria-hidden="true">
