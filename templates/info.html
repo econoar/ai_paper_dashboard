@@ -3,19 +3,15 @@
 {% block content %}
 <div class="container mt-4">
   <h1>About This Dashboard</h1>
+  <hr>
   <p>
-    This dashboard is designed to help you quickly ingest and review the latest research papers in artificial intelligence.
-    We query arXiv for papers in the broad categories of <strong>cs.AI, cs.LG, and stat.ML</strong>—areas focused on AI and machine learning.
+    Welcome to the AI Research Papers Dashboard! This site is designed to help you quickly ingest, review, and share the latest research papers in artificial intelligence and machine learning.
   </p>
+
+  <h2>How It Works</h2>
   <p>
-    Next, we apply a secondary filter by scanning the paper titles and abstracts for your specified keywords,
-    such as "reinforcement learning," "digital twin," "agent coordination," and others.
-    If none of these keywords are found, the Tags column displays "N/A"—this does not mean the paper isn’t relevant,
-    but simply that it did not contain those exact terms.
-  </p>
-  <h2>Explore Relevant arXiv Categories</h2>
-  <p>
-    You can also visit these arXiv pages to see all recent papers in each category:
+    <strong>Broad Filtering:</strong><br>
+    Our dashboard queries the arXiv database to retrieve papers from three broad categories:
   </p>
   <ul>
     <li>
@@ -28,10 +24,47 @@
       <a href="https://arxiv.org/list/stat.ML/recent" target="_blank">stat.ML – Statistical Machine Learning</a>
     </li>
   </ul>
+
   <p>
-    This two-tier filtering ensures that the papers you see are from the appropriate academic categories and
-    also contain key topics that you care about.
-    If you have any questions or feedback about the filtering process, please feel free to contact us.
+    <strong>Secondary Keyword Filtering:</strong><br>
+    After retrieving papers from these categories, our system further checks each paper's title and abstract for specific keywords such as “reinforcement learning,” “digital twin,” “agent coordination,” and others. If none of these terms are detected, the Tags column will display "N/A." This simply means that none of your preset keywords were found in the paper—even though it still belongs to one of the broad categories.
+  </p>
+
+  <h2>Key Features</h2>
+  <ul>
+    <li>
+      <strong>Paper Listings:</strong> Papers are grouped by publication day, showing key details such as time (PST), detected keywords (or “N/A”), the title, and an abstract excerpt.
+    </li>
+    <li>
+      <strong>More Info:</strong> Click the "More Info" button to view detailed paper information in a modal window.
+    </li>
+    <li>
+      <strong>Summarize:</strong> Generate an AI-crafted summary in a customizable modal. You can adjust options such as minimum and maximum token lengths, choose from different summarization models, and even edit a default prompt. The summary is tailored for sharing on social media.
+    </li>
+    <li>
+      <strong>Bookmark:</strong> Save papers of interest in your browser’s local storage. Bookmarked papers are easily accessible on a dedicated Bookmarks page.
+    </li>
+    <li>
+      <strong>Social Sharing:</strong> Once a summary is generated, use the share functionality to quickly post the paper's title, summary, and a link to the PDF on Twitter.
+    </li>
+    <li>
+      <strong>Refresh & Search:</strong> A manual refresh button lets you update the list on demand while an integrated autocomplete search bar helps filter papers by title.
+    </li>
+  </ul>
+  
+  <h2>Explore More</h2>
+  <p>
+    You can visit the following arXiv pages to see all the recent papers in each category:
+  </p>
+  <ul>
+    <li><a href="https://arxiv.org/list/cs.AI/recent" target="_blank">cs.AI – Artificial Intelligence</a></li>
+    <li><a href="https://arxiv.org/list/cs.LG/recent" target="_blank">cs.LG – Machine Learning</a></li>
+    <li><a href="https://arxiv.org/list/stat.ML/recent" target="_blank">stat.ML – Statistical Machine Learning</a></li>
+  </ul>
+
+  <hr>
+  <p>
+    If you have any questions or suggestions, please reach out via our internal channels.
   </p>
 </div>
 {% endblock %}
