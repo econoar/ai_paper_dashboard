@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>AI Papers Dashboard</title>
-  <!-- Mobile friendly: viewport meta tag -->
+  <title>{% block title %}Freysa Research Dashboard{% endblock %}</title>
+  <!-- Viewport meta tag for mobile responsiveness -->
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootswatch/4.5.2/cosmo/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
@@ -39,11 +39,12 @@
 </head>
 <body>
   <nav class="navbar navbar-expand-lg navbar-light bg-light">
-    <a class="navbar-brand" href="{{ url_for('index') }}">AI Papers Dashboard</a>
+    <a class="navbar-brand" href="{{ url_for('index') }}">Freysa Research Dashboard</a>
     <div class="navbar-nav">
-      <a class="nav-item nav-link" href="{{ url_for('index') }}">Home</a>
-      <a class="nav-item nav-link" href="{{ url_for('bookmarks') }}">Bookmarks</a>
-      <a class="nav-item nav-link" href="{{ url_for('info') }}">Info</a>
+      <a class="nav-item nav-link {% if request.endpoint == 'index' %}active{% endif %}" href="{{ url_for('index') }}">Papers</a>
+      <a class="nav-item nav-link {% if request.endpoint == 'news' %}active{% endif %}" href="{{ url_for('news') }}">News</a>
+      <a class="nav-item nav-link {% if request.endpoint == 'bookmarks' %}active{% endif %}" href="{{ url_for('bookmarks') }}">Bookmarks</a>
+      <a class="nav-item nav-link {% if request.endpoint == 'info' %}active{% endif %}" href="{{ url_for('info') }}">Info</a>
     </div>
   </nav>
   <div class="container mt-4">
@@ -75,7 +76,7 @@
     }
   </script>
   
-  <!-- Bind touch events for mobile close of modals -->
+  <!-- Bind both click and touchend events for modal close on mobile -->
   <script>
     $(document).on('click touchend', '.modal .close', function() {
       $(this).closest('.modal').modal('hide');

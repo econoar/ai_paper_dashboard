@@ -5,29 +5,36 @@ import re
 from PyPDF2 import PdfReader
 from flask import Flask, render_template, redirect, url_for, request, jsonify
 from transformers import pipeline
-from urllib.parse import quote
+from urllib.parse import quote, unquote_plus
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from zoneinfo import ZoneInfo  # Requires Python 3.9+
+import time  # for timestamp conversion in feeds
+from bs4 import BeautifulSoup
+import html
+from flask_caching import Cache
+from concurrent.futures import ThreadPoolExecutor
 
 app = Flask(__name__)
 
-# Global list to store papers
+app.config['CACHE_TYPE'] = 'simple'
+app.config['TEMPLATES_AUTO_RELOAD'] = True
+app.config['CACHE_DEFAULT_TIMEOUT'] = 0
+cache = Cache(app)
+
 papers = []
 
-# Define desired topics (full keyword names)
 DESIRED_TOPICS = [
     "reinforcement learning",
     "digital twin",
     "agent coordination",
     "multi-agent systems",
-    "transformers",  # will use regex for variations
+    "transformers",
     "explainable ai",
     "self-supervised learning",
     "federated learning"
 ]
 
-# Default summarization model
 SUMMARIZER_MODEL = "sshleifer/distilbart-cnn-12-6"
 summarizer = pipeline("summarization", model=SUMMARIZER_MODEL)
 
@@ -47,21 +54,8 @@ def build_query(selected_tag="all", max_results=100, start=0):
     return query_url
 
 def get_tags(combined_text):
-    """
-    Returns a list of full tag names using exact matching for most keywords and a regex for 'transformers'
-    to catch both singular and plural forms.
-    """
-    keywords = [
-        "reinforcement learning",
-        "digital twin",
-        "agent coordination",
-        "multi-agent systems",
-        "explainable ai",
-        "self-supervised learning",
-        "federated learning"
-    ]
     tags = []
-    for keyword in keywords:
+    for keyword in DESIRED_TOPICS:
         if keyword in combined_text:
             tags.append(keyword)
     if re.search(r'\btransformer(s)?\b', combined_text):
@@ -104,66 +98,6 @@ def fetch_papers(selected_tag="all", max_results=100, start=0):
         })
     papers = new_papers
 
-def extract_pdf_text(pdf_url):
-    try:
-        response = requests.get(pdf_url, timeout=30)
-        if response.status_code == 200:
-            with io.BytesIO(response.content) as f:
-                reader = PdfReader(f)
-                all_text = []
-                for page in reader.pages:
-                    page_text = page.extract_text() or ""
-                    all_text.append(page_text)
-                return "\n".join(all_text)
-        else:
-            print("Failed to download PDF; status code", response.status_code)
-            return None
-    except Exception as e:
-        print("Error extracting PDF text:", e)
-        return None
-
-def generate_summary(text, min_length=80, max_length=300, model_name=SUMMARIZER_MODEL, custom_prompt=None):
-    """
-    Generates a tweet-formatted summary for social sharing.
-    If no custom prompt is provided, uses a default tweet-style format:
-    
-    Format:
-    Title: [Paper Title]
-    Summary: [Concise summary highlighting key contributions and novelty]
-    Link: [PDF or arXiv URL]
-    
-    The aim is to keep it short, engaging, and within tweet character limits.
-    """
-    if custom_prompt:
-        prompt_text = custom_prompt + "\n\n" + text
-    else:
-        prompt_text = (
-            "Write a tweet-length summary of this research paper.\n"
-            "Format it as follows:\n"
-            "Title: <Paper Title>\n"
-            "Summary: <Concise summary of key contributions, novelty, and impact>\n"
-            "Link: <Paper PDF or arXiv URL>\n\n"
-            "Paper Text:\n" + text
-        )
-    if model_name != SUMMARIZER_MODEL:
-        temp_summarizer = pipeline("summarization", model=model_name)
-        summary_output = temp_summarizer(
-            prompt_text,
-            max_length=max_length,
-            min_length=min_length,
-            do_sample=False,
-            truncation=True
-        )
-    else:
-        summary_output = summarizer(
-            prompt_text,
-            max_length=max_length,
-            min_length=min_length,
-            do_sample=False,
-            truncation=True
-        )
-    return summary_output[0]['summary_text'].strip()
-
 @app.route('/')
 def index():
     selected_tag = request.args.get("tag", "all")
@@ -174,19 +108,92 @@ def index():
     max_results = 100
     start = (page - 1) * max_results
     fetch_papers(selected_tag, max_results, start)
-    
+
     grouped_papers = defaultdict(list)
     for paper in papers:
         pub = paper.get("published", "No date available")
         try:
             dt = datetime.strptime(pub, "%b %d, %Y %H:%M")
             day_key = dt.strftime("%b %d, %Y")
-        except Exception:
+        except Exception as e:
+            print(f"⚠️ Date parsing failed for: {pub} → {e}")
             day_key = pub
         grouped_papers[day_key].append(paper)
-    
+
     return render_template('index.html', grouped_papers=grouped_papers,
                            selected_tag=selected_tag, page=page, papers=papers)
+
+@app.route('/news')
+def news():
+    selected_source = unquote_plus(request.args.get("source", "").strip())
+    print(f"🔎 Selected Source: {selected_source}")
+
+    feed_sources = [
+        {"url": "https://techcrunch.com/category/artificial-intelligence/feed/", "source": "TechCrunch"},
+        {"url": "https://venturebeat.com/category/ai/feed/", "source": "VentureBeat"},
+        {"url": "https://www.wired.com/feed/tag/ai/latest/rss", "source": "Wired"},
+        {"url": "https://www.zdnet.com/topic/artificial-intelligence/rss.xml", "source": "ZDNet"},
+        {"url": "https://syncedreview.com/feed/", "source": "Synced Review"}
+    ]
+
+    news_items = []
+    for src in feed_sources:
+        if selected_source and src["source"] != selected_source:
+            continue
+
+        parsed = feedparser.parse(src["url"])
+        for entry in parsed.entries:
+            summary_html = entry.get("summary") or entry.get("description", "")
+            soup = BeautifulSoup(summary_html, "html.parser")
+            text_only = soup.get_text()
+            summary = html.unescape(text_only)
+
+            published_parsed = entry.get("published_parsed")
+            if published_parsed:
+                dt_utc = datetime(*published_parsed[:6], tzinfo=timezone.utc)
+                dt_pst = dt_utc.astimezone(ZoneInfo("America/Los_Angeles"))
+                formatted_time = dt_pst.strftime("%H:%M")
+                published_str = dt_pst.strftime("%b %d, %Y %H:%M")
+                day_key = dt_pst.strftime("%b %d, %Y")
+                timestamp = dt_pst.timestamp()
+            else:
+                published_str = entry.get("published", "No date")
+                formatted_time = published_str
+                day_key = published_str
+                timestamp = 0
+
+            news_items.append({
+                "title": entry.title,
+                "link": entry.link,
+                "summary": summary,
+                "published": published_str,
+                "formatted_time": formatted_time,
+                "source": src["source"],
+                "timestamp": timestamp,
+                "day_key": day_key
+            })
+
+    grouped_unsorted = defaultdict(list)
+    for item in news_items:
+        grouped_unsorted[item["day_key"]].append(item)
+
+    for day in grouped_unsorted:
+        grouped_unsorted[day].sort(key=lambda x: x["timestamp"], reverse=True)
+
+    grouped_news = dict(
+        sorted(
+            grouped_unsorted.items(),
+            key=lambda x: datetime.strptime(x[0], "%b %d, %Y"),
+            reverse=True
+        )
+    )
+
+    return render_template(
+        "news.html",
+        grouped_news=grouped_news,
+        sources=[src["source"] for src in feed_sources],
+        selected_source=selected_source
+    )
 
 @app.route('/summarize/<int:paper_id>')
 def summarize_paper(paper_id):
@@ -201,7 +208,6 @@ def summarize_paper(paper_id):
     if not pdf_text:
         return jsonify({'error': 'Could not download or extract text from PDF.'}), 404
     truncated_text = pdf_text[:5000]
-
     try:
         min_length = int(request.args.get("min_length", 80))
         max_length = int(request.args.get("max_length", 300))
@@ -210,9 +216,9 @@ def summarize_paper(paper_id):
         max_length = 300
     model_name = request.args.get("model", SUMMARIZER_MODEL)
     custom_prompt = request.args.get("prompt", None)
-    
+
     ai_summary = generate_summary(truncated_text, min_length, max_length, model_name, custom_prompt)
-    
+
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return jsonify({'summary': ai_summary})
     else:
@@ -238,4 +244,4 @@ def info():
     return render_template('info.html')
 
 if __name__ == '__main__':
-    app.run(host="0.0.0.0", debug=True)
+    app.run(host='0.0.0.0', port=5050, debug=True)

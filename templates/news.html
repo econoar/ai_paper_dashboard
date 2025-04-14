@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block title %}AI Headlines – Freysa AI Research{% endblock %}
+
+{% block content %}
+<h1 class="mb-3">Latest AI News</h1>
+
+<form method="get" action="{{ url_for('news') }}" class="form-inline mb-4">
+  <label for="source" class="mr-2">Filter by source:</label>
+  <select name="source" id="source" class="form-control form-control-sm mr-2" onchange="this.form.submit()">
+    <option value="">All Sources</option>
+    {% for source in sources %}
+      {% set is_selected = (source == selected_source) %}
+      <option value="{{ source }}" {% if is_selected %}selected{% endif %}>{{ source }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+{% if grouped_news %}
+  {% for date, items in grouped_news.items() %}
+    <h5 class="mt-4 text-primary">{{ date }}</h5>
+    <div>
+      {% for item in items %}
+        <div class="pb-3 mb-3" style="border-bottom: 1px solid #eee;">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="text-muted small">{{ item.source }}</span>
+            <span class="text-muted small">{{ item.formatted_time }}</span>
+          </div>
+          <a href="{{ item.link }}" target="_blank" class="font-weight-bold d-block" style="font-size: 1rem; color: #0056b3;">
+            {{ item.title }}
+          </a>
+          <p class="mb-0 mt-1" style="font-size: 0.9rem; white-space: pre-wrap;">{{ item.summary }}</p>
+        </div>
+      {% endfor %}
+    </div>
+  {% endfor %}
+{% else %}
+  <p>No news articles found for this source.</p>
+{% endif %}
+{% endblock %}
